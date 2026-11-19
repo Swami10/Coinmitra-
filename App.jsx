@@ -1,0 +1,658 @@
+import Register from "./Register.jsx";
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { auth, db } from "./firebase.js";
+import { doc, onSnapshot } from "firebase/firestore";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
+import { 
+  Coins, Award, BookOpen, Gamepad2, CheckSquare, Wallet as WalletIcon, History, 
+  ShieldCheck, Users, Info, Phone, FileText, Lock, CheckCircle, Clock, 
+  ArrowRight, Menu, X, UserCheck, Sparkles, TrendingUp, Gift
+} from 'lucide-react';
+
+// --- COMPONENTS ---
+
+const Navbar = ({ user, coinBalance }) => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  return (
+    <nav style={{ background: '#0d1b2a', borderBottom: '1px solid #1b263b', position: 'sticky', top: 0, zIndex: 1000 }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px' }}>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+          <div style={{ background: 'linear-gradient(135deg, #f39c12, #e67e22)', padding: '8px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Coins size={24} color="#0d1b2a" />
+          </div>
+          <div>
+            <span style={{ fontSize: '22px', fontWeight: '800', color: '#ffffff', letterSpacing: '0.5px' }}>Coin<span style={{ color: '#f39c12' }}>Mitra</span></span>
+            <div style={{ fontSize: '10px', color: '#a0aec0', letterSpacing: '1px' }}>EARN • LEARN • PLAY</div>
+          </div>
+        </Link>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ background: '#1b263b', border: '1px solid #f39c12', padding: '6px 14px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Sparkles size={16} color="#f39c12" />
+            <span style={{ fontWeight: '700', color: '#f39c12' }}>{coinBalance.toLocaleString()} Coins</span>
+            <span style={{ fontSize: '11px', background: '#322612', color: '#f39c12', padding: '2px 6px', borderRadius: '4px' }}>DEMO</span>
+          </div>
+
+          <div className="desktop-nav" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+            <Link to="/dashboard" style={{ color: '#e0e1dd', fontWeight: '500' }}>Dashboard</Link>
+            <Link to="/quiz" style={{ color: '#e0e1dd', fontWeight: '500' }}>Quiz</Link>
+            <Link to="/wallet" style={{ color: '#e0e1dd', fontWeight: '500' }}>Wallet</Link>
+            <Link to="/admin" style={{ color: '#f39c12', fontWeight: '700', background: '#222831', padding: '6px 12px', borderRadius: '6px' }}>Admin</Link>
+            {user.email ? <button onClick={() => signOut(auth)} style={{ background: '#e74c3c', color: '#fff', padding: '8px 16px', borderRadius: '8px', fontWeight: '700' }}>Logout</button> : <Link to="/login" style={{ background: '#f39c12', color: '#0d1b2a', padding: '8px 16px', borderRadius: '8px', fontWeight: '700' }}>Login</Link>}
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+const Footer = () => (
+  <footer style={{ background: '#070f1a', borderTop: '1px solid #1b263b', padding: '40px 20px 20px', marginTop: '60px', color: '#a0aec0' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '30px', marginBottom: '30px' }}>
+      <div>
+        <h3 style={{ color: '#ffffff', marginBottom: '15px' }}>CoinMitra</h3>
+        <p style={{ fontSize: '14px', lineHeight: '1.6' }}>India's premier rewards platform empowering users to learn financial literacy, play brain games, and earn demo rewards safely.</p>
+        <div style={{ marginTop: '15px', fontSize: '12px', color: '#f39c12', background: '#1b263b', padding: '8px', borderRadius: '6px', display: 'inline-block' }}>
+          ⚠️ 1000 Demo Coins = ₹10 Illustrative Value (DEMO MODE)
+        </div>
+      </div>
+      <div>
+        <h4 style={{ color: '#ffffff', marginBottom: '15px' }}>Quick Links</h4>
+        <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '14px' }}>
+          <li><Link to="/dashboard" style={{ color: '#a0aec0' }}>Member Dashboard</Link></li>
+          <li><Link to="/quiz" style={{ color: '#a0aec0' }}>Quiz & Brain Games</Link></li>
+          <li><Link to="/tasks" style={{ color: '#a0aec0' }}>Sponsored Tasks</Link></li>
+          <li><Link to="/wallet" style={{ color: '#a0aec0' }}>My Coin Wallet</Link></li>
+        </ul>
+      </div>
+      <div>
+        <h4 style={{ color: '#ffffff', marginBottom: '15px' }}>Legal & Company</h4>
+        <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '14px' }}>
+          <li><Link to="/about" style={{ color: '#a0aec0' }}>About Us</Link></li>
+          <li><Link to="/contact" style={{ color: '#a0aec0' }}>Contact Support</Link></li>
+          <li><Link to="/privacy" style={{ color: '#a0aec0' }}>Privacy Policy</Link></li>
+          <li><Link to="/terms" style={{ color: '#a0aec0' }}>Terms & Conditions</Link></li>
+        </ul>
+      </div>
+    </div>
+    <div style={{ textAlign: 'center', borderTop: '1px solid #1b263b', paddingTop: '20px', fontSize: '13px' }}>
+      © 2026 CoinMitra India. All rights reserved. Designed for Android & Web.
+    </div>
+  </footer>
+);
+
+// --- PAGES ---
+
+const Home = ({ addCoins }) => {
+  const navigate = useNavigate();
+  return (
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
+      <div style={{ background: 'linear-gradient(135deg, #1b263b, #0d1b2a)', border: '1px solid #27374d', borderRadius: '24px', padding: '60px 40px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', background: 'radial-gradient(circle, rgba(243,156,18,0.2) 0%, transparent 70%)', borderRadius: '50%' }}></div>
+        <span style={{ background: '#f39c12', color: '#0d1b2a', padding: '6px 16px', borderRadius: '20px', fontWeight: '700', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          India's #1 Rewards Platform
+        </span>
+        <h1 style={{ fontSize: '42px', fontWeight: '800', color: '#ffffff', margin: '20px 0' }}>
+          Earn • Learn • Play • <span style={{ color: '#f39c12' }}>Reward</span>
+        </h1>
+        <p style={{ fontSize: '18px', color: '#a0aec0', maxWidth: '700px', margin: '0 auto 30px', lineHeight: '1.6' }}>
+          Participate in daily quizzes, complete sponsored tasks, watch educational videos, and convert your demo coins into exciting rewards.
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', flexWrap: 'wrap' }}>
+          <button onClick={() => navigate('/dashboard')} style={{ background: '#f39c12', color: '#0d1b2a', padding: '14px 28px', borderRadius: '12px', fontWeight: '700', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            Get Started Free <ArrowRight size={18} />
+          </button>
+          <button onClick={() => navigate('/quiz')} style={{ background: '#27374d', color: '#ffffff', padding: '14px 28px', borderRadius: '12px', fontWeight: '700', fontSize: '16px', border: '1px solid #415a77' }}>
+            Play Daily Quiz
+          </button>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '25px', marginTop: '50px' }}>
+        {[
+          { icon: <CheckSquare size={32} color="#f39c12" />, title: "Daily Check-in", desc: "Claim streak bonuses every 24 hours without duplication." },
+          { icon: <Gamepad2 size={32} color="#f39c12" />, title: "Quizzes & Games", desc: "Test your knowledge on general awareness and digital safety." },
+          { icon: <BookOpen size={32} color="#f39c12" />, title: "Educational Videos", desc: "Learn financial literacy and earn rewards for completion." },
+          { icon: <WalletIcon size={32} color="#f39c12" />, title: "Demo Coin Wallet", desc: "Track earnings with complete ledger transparency and security." }
+        ].map((item, idx) => (
+          <div key={idx} style={{ background: '#1b263b', border: '1px solid #27374d', borderRadius: '16px', padding: '30px', transition: 'transform 0.2s' }}>
+            <div style={{ background: '#0d1b2a', width: '60px', height: '60px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+              {item.icon}
+            </div>
+            <h3 style={{ color: '#ffffff', fontSize: '18px', marginBottom: '10px' }}>{item.title}</h3>
+            <p style={{ color: '#a0aec0', fontSize: '14px', lineHeight: '1.5' }}>{item.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const Dashboard = ({ user, coinBalance, setCoinBalance }) => {
+  const [checkedIn, setCheckedIn] = useState(false); 
+
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) return;
+        const token = await currentUser.getIdToken();
+        const response = await fetch('/api/daily-checkin/status', {
+          headers: { Authorization: 'Bearer ' + token }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setCheckedIn(data.checkedIn);
+        }
+      } catch (error) {
+        console.error('Check-in status error:', error);
+      }
+    };
+    checkStatus();
+  }, [user]);
+
+
+  const handleDailyCheckin = async () => {
+    if (checkedIn) return;
+
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        alert("Please login first.");
+        return;
+      }
+
+      const token = await currentUser.getIdToken();
+      const response = await fetch('/api/daily-checkin', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.status === 409) {
+        setCheckedIn(true);
+        alert("You have already claimed today's 2 Points.");
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Check-in failed');
+      }
+
+      setCheckedIn(true);
+      setCoinBalance(data.newBalance);
+      alert("Daily Check-in successful! +2 Points added.");
+    } catch (error) {
+      alert(error.message || "Please try again.");
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '15px' }}>
+        <div>
+          <h2 style={{ fontSize: '28px', color: '#ffffff' }}>Welcome back, {user.name}! 👋</h2>
+          <p style={{ color: '#a0aec0' }}>Here is your activity summary and quick access portal.</p>
+        </div>
+        <div style={{ background: '#1b263b', border: '1px solid #f39c12', padding: '12px 24px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div>
+            <div style={{ fontSize: '12px', color: '#a0aec0' }}>Available Balance</div>
+            <div style={{ fontSize: '20px', fontWeight: '800', color: '#f39c12' }}>{coinBalance.toLocaleString()} Coins</div>
+          </div>
+          <Link to="/wallet" style={{ background: '#f39c12', color: '#0d1b2a', padding: '8px 14px', borderRadius: '8px', fontWeight: '700', fontSize: '13px' }}>Redeem</Link>
+        </div>
+      </div>
+
+      <div style={{ background: 'linear-gradient(135deg, #27374d, #1b263b)', borderRadius: '16px', padding: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', flexWrap: 'wrap', gap: '20px', border: '1px solid #415a77' }}>
+        <div>
+          <h3 style={{ color: '#ffffff', fontSize: '20px', marginBottom: '8px' }}>Daily Streak Check-in</h3>
+          <p style={{ color: '#a0aec0', fontSize: '14px' }}>Claim your daily bonus coins instantly. Avoid duplicate claims.</p>
+        </div>
+        <button onClick={handleDailyCheckin} style={{ background: checkedIn ? '#415a77' : '#f39c12', color: checkedIn ? '#ffffff' : '#0d1b2a', padding: '12px 24px', borderRadius: '10px', fontWeight: '700', fontSize: '15px' }}>
+          {checkedIn ? 'Checked In Today ✅' : 'Claim Daily +2 Points 🪙'}
+        </button>
+      </div>
+
+      <h3 style={{ color: '#ffffff', marginBottom: '20px' }}>Explore Activities</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+        {[
+          { title: 'Quiz & Brain Games', desc: 'Answer questions & earn up to 500 coins', link: '/quiz', icon: <Gamepad2 color="#f39c12" /> },
+          { title: 'Sponsored Tasks', desc: 'Complete app installs & offers', link: '/tasks', icon: <CheckSquare color="#f39c12" /> },
+          { title: 'Educational Videos', desc: 'Watch & learn financial literacy', link: '/videos', icon: <BookOpen color="#f39c12" /> },
+          { title: 'Watch & Earn', desc: 'Watch optional rewarded ads and earn eligible Points', link: '/watch-earn', icon: <Gift color="#f39c12" /> },
+          { title: 'Reward Requests', desc: 'Convert demo coins to gift cards', link: '/rewards', icon: <Gift color="#f39c12" /> }
+        ].map((card, idx) => (
+          <Link key={idx} to={card.link} style={{ background: '#1b263b', border: '1px solid #27374d', borderRadius: '16px', padding: '25px', display: 'flex', flexDirection: 'column', gap: '15px', textDecoration: 'none', transition: 'transform 0.2s' }}>
+            <div style={{ background: '#0d1b2a', width: '45px', height: '45px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {card.icon}
+            </div>
+            <div>
+              <h4 style={{ color: '#ffffff', fontSize: '18px', marginBottom: '5px' }}>{card.title}</h4>
+              <p style={{ color: '#a0aec0', fontSize: '13px' }}>{card.desc}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const Quiz = ({ setCoinBalance }) => {
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [score, setScore] = useState(0);
+  const [quizFinished, setQuizFinished] = useState(false);
+
+  const questions = [
+    { q: "What does UPI stand for in Indian digital payments?", options: ["Unified Payment Interface", "Universal Personal Income", "United Payment Institution", "Union Payment India"], correct: 0 },
+    { q: "Which of the following is safest when receiving a UPI payment?", options: ["Sharing your UPI PIN", "Entering your UPI PIN", "Scanning a QR code without entering PIN", "Sharing your ATM card number"], correct: 2 },
+    { q: "What is the recommended emergency fund savings duration?", options: ["1 week", "1 month", "3 to 6 months of expenses", "10 years"], correct: 2 },
+    { q: "Which institution regulates banking and currency in India?", options: ["SEBI", "RBI", "IRDAI", "NABARD"], correct: 1 }
+  ];
+
+  const handleAnswer = (optionIndex) => {
+    if (optionIndex === questions[currentQuestion].correct) {
+      setScore(prev => prev + 1);
+    }
+    const nextQ = currentQuestion + 1;
+    if (nextQ < questions.length) {
+      setCurrentQuestion(nextQ);
+    } else {
+      setQuizFinished(true);
+      const earned = (score + (optionIndex === questions[currentQuestion].correct ? 1 : 0)) * 100;
+      setCoinBalance(prev => prev + earned);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: '800px', margin: '40px auto', padding: '20px' }}>
+      <div style={{ background: '#1b263b', border: '1px solid #27374d', borderRadius: '20px', padding: '40px' }}>
+        <h2 style={{ color: '#ffffff', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Gamepad2 color="#f39c12" /> Daily Knowledge & Safety Quiz
+        </h2>
+        <p style={{ color: '#a0aec0', marginBottom: '30px' }}>Test your financial literacy and win up to 400 Demo Coins.</p>
+
+        {!quizFinished ? (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#a0aec0', marginBottom: '15px', fontSize: '14px' }}>
+              <span>Question {currentQuestion + 1} of {questions.length}</span>
+              <span>Score: {score}</span>
+            </div>
+            <h3 style={{ color: '#ffffff', fontSize: '20px', marginBottom: '25px', lineHeight: '1.5' }}>
+              {questions[currentQuestion].q}
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {questions[currentQuestion].options.map((opt, idx) => (
+                <button key={idx} onClick={() => handleAnswer(idx)} style={{ background: '#27374d', color: '#ffffff', padding: '16px 20px', borderRadius: '12px', textAlign: 'left', fontWeight: '600', fontSize: '15px', border: '1px solid #415a77', transition: 'background 0.2s' }}>
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '20px 0' }}>
+            <div style={{ fontSize: '48px', marginBottom: '15px' }}>🏆</div>
+            <h3 style={{ color: '#ffffff', fontSize: '24px', marginBottom: '10px' }}>Quiz Completed Successfully!</h3>
+            <p style={{ color: '#a0aec0', fontSize: '16px', marginBottom: '20px' }}>You scored {score} out of {questions.length} correct.</p>
+            <div style={{ background: '#0d1b2a', padding: '15px', borderRadius: '12px', display: 'inline-block', color: '#f39c12', fontWeight: '700', fontSize: '18px', marginBottom: '30px', border: '1px solid #f39c12' }}>
+              +{score * 100} Demo Coins Credited to Wallet!
+            </div>
+            <div>
+              <button onClick={() => { setCurrentQuestion(0); setScore(0); setQuizFinished(false); }} style={{ background: '#f39c12', color: '#0d1b2a', padding: '12px 24px', borderRadius: '10px', fontWeight: '700' }}>
+                Play Again
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const Tasks = ({ setCoinBalance }) => {
+  const [tasksList, setTasksList] = useState([
+    { id: 't1', title: 'Install Partner Shopping App', reward: 500, status: 'Active', category: 'Sponsored', description: 'Download and register with mobile OTP.' },
+    { id: 't2', title: 'Complete UPI Security Quiz', reward: 250, status: 'Active', category: 'Quiz', description: 'Answer 5 questions correctly about digital safety.' },
+    { id: 't3', title: 'Watch Financial Literacy Video', reward: 150, status: 'Active', category: 'Education', description: 'Watch full 3 minutes video on Mutual Funds basics.' }
+  ]);
+
+  const handleCompleteTask = (task) => {
+    setCoinBalance(prev => prev + task.reward);
+    alert(`Task completed! +${task.reward} Demo Coins added.`);
+    setTasksList(prev => prev.filter(t => t.id !== task.id));
+  };
+
+  return (
+    <div style={{ maxWidth: '1200px', margin: '40px auto', padding: '20px' }}>
+      <h2 style={{ color: '#ffffff', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <CheckSquare color="#f39c12" /> Sponsored Tasks & Offers
+      </h2>
+      <p style={{ color: '#a0aec0', marginBottom: '30px' }}>Complete verified tasks and partner offers to earn instant demo coins.</p>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
+        {tasksList.map(task => (
+          <div key={task.id} style={{ background: '#1b263b', border: '1px solid #27374d', borderRadius: '16px', padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '20px' }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                <span style={{ background: '#27374d', color: '#f39c12', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: '700' }}>{task.category}</span>
+                <span style={{ color: '#f39c12', fontWeight: '800', fontSize: '16px' }}>+{task.reward} Coins</span>
+              </div>
+              <h3 style={{ color: '#ffffff', fontSize: '18px', marginBottom: '8px' }}>{task.title}</h3>
+              <p style={{ color: '#a0aec0', fontSize: '14px', lineHeight: '1.5' }}>{task.description}</p>
+            </div>
+            <button onClick={() => handleCompleteTask(task)} style={{ background: '#f39c12', color: '#0d1b2a', padding: '12px', borderRadius: '10px', fontWeight: '700', width: '100%' }}>
+              Complete Task & Earn
+            </button>
+          </div>
+        ))}
+        {tasksList.length === 0 && (
+          <div style={{ color: '#a0aec0', gridColumn: '1 / -1', textAlign: 'center', padding: '40px' }}>
+            All available tasks completed for today! Check back tomorrow for new offers.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const WatchEarn = () => (
+  <div style={{ maxWidth: "900px", margin: "40px auto", padding: "20px" }}>
+    <div style={{ background: "#1b263b", border: "1px solid #27374d", borderRadius: "20px", padding: "30px" }}>
+      <h2 style={{ color: "#ffffff", marginBottom: "15px" }}>Watch & Earn</h2>
+      <p style={{ color: "#a0aec0", lineHeight: "1.7" }}>Watch optional rewarded advertisements and learn about useful products and services.</p>
+      <div style={{ background: "#0d1b2a", borderRadius: "12px", padding: "20px", marginTop: "20px" }}>
+        <h3 style={{ color: "#f39c12" }}>Rewarded Ads Coming Soon</h3>
+        <p style={{ color: "#a0aec0", marginTop: "10px" }}>This feature will become available after official ad integration and verification.</p>
+      </div>
+      <p style={{ color: "#a0aec0", marginTop: "20px", fontSize: "13px" }}>No advertisement is available yet. No Points are awarded on this page currently.</p>
+    </div>
+  </div>
+);
+
+const Wallet = ({ coinBalance }) => {
+  const inrValue = (coinBalance / 1000) * 10;
+
+  return (
+    <div style={{ maxWidth: '1000px', margin: '40px auto', padding: '20px' }}>
+      <h2 style={{ color: '#ffffff', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <WalletIcon color="#f39c12" /> My Coin Wallet
+      </h2>
+      <p style={{ color: '#a0aec0', marginBottom: '30px' }}>Monitor your demo coin earnings, valuation, and ledger history.</p>
+
+      <div style={{ background: 'linear-gradient(135deg, #1b263b, #0d1b2a)', border: '1px solid #f39c12', borderRadius: '20px', padding: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', flexWrap: 'wrap', gap: '20px' }}>
+        <div>
+          <div style={{ fontSize: '14px', color: '#a0aec0', marginBottom: '5px' }}>Current Demo Coin Balance</div>
+          <div style={{ fontSize: '36px', fontWeight: '800', color: '#f39c12' }}>{coinBalance.toLocaleString()} Coins</div>
+          <div style={{ fontSize: '13px', color: '#a0aec0', marginTop: '5px' }}>Illustrative Reward Value: ₹{inrValue.toFixed(2)} (DEMO)</div>
+        </div>
+        <Link to="/rewards" style={{ background: '#f39c12', color: '#0d1b2a', padding: '14px 28px', borderRadius: '12px', fontWeight: '700', fontSize: '16px', textDecoration: 'none' }}>
+          Request Reward Payout
+        </Link>
+      </div>
+
+      <h3 style={{ color: '#ffffff', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <History size={20} color="#f39c12" /> Transaction History
+      </h3>
+      <div style={{ background: '#1b263b', border: '1px solid #27374d', borderRadius: '16px', overflow: 'hidden' }}>
+        {[
+          { title: 'Daily Quiz Bonus', date: '2026-11-18', amount: '+300 Coins', type: 'Credit' },
+          { title: 'Daily Check-in Bonus', date: '2026-11-18', amount: '+100 Coins', type: 'Credit' },
+          { title: 'Sponsored Task: UPI Security', date: '2026-11-17', amount: '+250 Coins', type: 'Credit' },
+          { title: 'Reward Request (Amazon Gift Voucher)', date: '2026-11-16', amount: '-5,000 Coins', type: 'Debit (Pending)' }
+        ].map((tx, idx) => (
+          <div key={idx} style={{ padding: '20px', borderBottom: idx < 3 ? '1px solid #27374d' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+            <div>
+              <div style={{ color: '#ffffff', fontWeight: '600', fontSize: '15px' }}>{tx.title}</div>
+              <div style={{ color: '#a0aec0', fontSize: '13px' }}>{tx.date}</div>
+            </div>
+            <div style={{ fontWeight: '700', color: tx.type === 'Credit' ? '#2ecc71' : '#f39c12' }}>
+              {tx.amount}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const RewardRequests = ({ coinBalance, setCoinBalance }) => {
+  const [requested, setRequested] = useState(false);
+
+  const handleRequest = (e) => {
+    e.preventDefault();
+    if (coinBalance < 5000) {
+      alert("Minimum 5,000 Demo Coins required for reward request.");
+      return;
+    }
+    setCoinBalance(prev => prev - 5000);
+    setRequested(true);
+    alert("🎉 Reward request submitted successfully! Pending admin review.");
+  };
+
+  return (
+    <div style={{ maxWidth: '800px', margin: '40px auto', padding: '20px' }}>
+      <h2 style={{ color: '#ffffff', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <Gift color="#f39c12" /> Reward Requests
+      </h2>
+      <p style={{ color: '#a0aec0', marginBottom: '30px' }}>Convert your demo coins into gift cards or vouchers. Subject to admin approval.</p>
+
+      <div style={{ background: '#1b263b', border: '1px solid #27374d', borderRadius: '20px', padding: '40px' }}>
+        <form onSubmit={handleRequest} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div>
+            <label style={{ display: 'block', color: '#a0aec0', marginBottom: '8px', fontSize: '14px' }}>Select Reward Type</label>
+            <select style={{ width: '100%', padding: '14px', background: '#0d1b2a', border: '1px solid #415a77', borderRadius: '10px', color: '#ffffff', fontSize: '15px' }}>
+              <option>Amazon Pay Gift Card (₹50 / 5,000 Coins)</option>
+              <option>Flipkart E-Gift Voucher (₹50 / 5,000 Coins)</option>
+              <option>UPI Digital Coupon (₹50 / 5,000 Coins) - DEMO</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', color: '#a0aec0', marginBottom: '8px', fontSize: '14px' }}>Registered UPI ID / Mobile Number</label>
+            <input type="text" placeholder="e.g. rahul@okaxis" required style={{ width: '100%', padding: '14px', background: '#0d1b2a', border: '1px solid #415a77', borderRadius: '10px', color: '#ffffff', fontSize: '15px' }} />
+          </div>
+          <div style={{ background: '#0d1b2a', padding: '15px', borderRadius: '10px', fontSize: '13px', color: '#f39c12', border: '1px solid #f39c12' }}>
+            ℹ️ Note: 1000 Demo Coins = ₹10 illustrative value. All payouts are processed in DEMO mode only until real revenue systems are approved.
+          </div>
+          <button type="submit" style={{ background: '#f39c12', color: '#0d1b2a', padding: '14px', borderRadius: '10px', fontWeight: '700', fontSize: '16px' }}>
+            Submit Reward Request (5,000 Coins)
+          </button>
+        </form>
+        {requested && (
+          <div style={{ marginTop: '20px', background: '#27374d', padding: '15px', borderRadius: '10px', color: '#2ecc71', textAlign: 'center', fontWeight: '600' }}>
+            Request submitted! Status: Pending Admin Approval.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const AdminDashboard = () => {
+  const [tasks, setTasks] = useState([
+    { id: 't1', title: 'Install Partner Shopping App', reward: 500, status: 'Active' },
+    { id: 't2', title: 'Complete UPI Security Quiz', reward: 250, status: 'Active' },
+    { id: 't4', title: 'Product Feedback Survey', reward: 300, status: 'Pending Review' }
+  ]);
+
+  const [requests, setRequests] = useState([
+    { id: 'req1', user: 'Rahul Sharma', amount: '5,000 Coins (₹50)', status: 'Pending' }
+  ]);
+
+  const handleApproveRequest = (id) => {
+    setRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'Approved ✅' } : r));
+    alert("Reward request approved successfully!");
+  };
+
+  const handleToggleTask = (id) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, status: t.status === 'Active' ? 'Disabled' : 'Active' } : t));
+  };
+
+  return (
+    <div style={{ maxWidth: '1200px', margin: '40px auto', padding: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+        <div>
+          <h2 style={{ color: '#ffffff', fontSize: '26px' }}>👑 Admin Management Dashboard</h2>
+          <p style={{ color: '#a0aec0' }}>Manage tasks, review reward payout requests, and oversee platform integrity.</p>
+        </div>
+        <span style={{ background: '#f39c12', color: '#0d1b2a', padding: '6px 14px', borderRadius: '8px', fontWeight: '700', fontSize: '13px' }}>Administrator Access</span>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', flexWrap: 'wrap' }}>
+        <div style={{ background: '#1b263b', border: '1px solid #27374d', borderRadius: '16px', padding: '25px' }}>
+          <h3 style={{ color: '#ffffff', marginBottom: '20px' }}>Task Management</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            {tasks.map(t => (
+              <div key={t.id} style={{ background: '#0d1b2a', padding: '15px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ color: '#ffffff', fontWeight: '600' }}>{t.title}</div>
+                  <div style={{ color: '#f39c12', fontSize: '13px' }}>+{t.reward} Coins • {t.status}</div>
+                </div>
+                <button onClick={() => handleToggleTask(t.id)} style={{ background: t.status === 'Active' ? '#e74c3c' : '#2ecc71', color: '#ffffff', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: '700' }}>
+                  {t.status === 'Active' ? 'Disable' : 'Enable'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ background: '#1b263b', border: '1px solid #27374d', borderRadius: '16px', padding: '25px' }}>
+          <h3 style={{ color: '#ffffff', marginBottom: '20px' }}>Pending Reward Payout Requests</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            {requests.map(r => (
+              <div key={r.id} style={{ background: '#0d1b2a', padding: '15px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ color: '#ffffff', fontWeight: '600' }}>{r.user}</div>
+                  <div style={{ color: '#a0aec0', fontSize: '13px' }}>{r.amount} • <span style={{ color: '#f39c12' }}>{r.status}</span></div>
+                </div>
+                {r.status === 'Pending' ? (
+                  <button onClick={() => handleApproveRequest(r.id)} style={{ background: '#2ecc71', color: '#0d1b2a', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: '700' }}>
+                    Approve
+                  </button>
+                ) : (
+                  <span style={{ color: '#2ecc71', fontSize: '13px', fontWeight: '700' }}>Processed</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const Login = () => {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate('/dashboard');
+    } catch (err) {
+      setError('Login failed: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: '450px', margin: '80px auto', padding: '20px' }}>
+      <div style={{ background: '#1b263b', borderRadius: '20px', padding: '40px' }}>
+        <h2 style={{ color: '#fff', textAlign: 'center' }}>Login to CoinMitra</h2>
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} required style={{ padding: '14px' }} />
+          <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required style={{ padding: '14px' }} />
+          {error && <p style={{ color: '#ff7777' }}>{error}</p>}
+          <button type="submit" disabled={loading} style={{ padding: '14px', background: '#f39c12', borderRadius: '10px', fontWeight: 'bold' }}>
+            {loading ? 'Please wait...' : 'Login'}
+          </button>
+        </form>
+        <p style={{ color: '#fff', marginTop: '20px', textAlign: 'center' }}>
+          New user? <Link to="/register" style={{ color: '#f39c12' }}>Create New Account</Link>
+        </p>
+      </div>
+    </div>
+  );
+};
+
+const StaticPage = ({ title, content }) => (
+  <div style={{ maxWidth: '800px', margin: '40px auto', padding: '20px' }}>
+    <div style={{ background: '#1b263b', border: '1px solid #27374d', borderRadius: '20px', padding: '40px' }}>
+      <h2 style={{ color: '#ffffff', marginBottom: '20px' }}>{title}</h2>
+      <p style={{ color: '#a0aec0', lineHeight: '1.7', fontSize: '15px' }}>{content}</p>
+    </div>
+  </div>
+);
+
+// --- MAIN APP ---
+
+function App() {
+  const [user, setUser] = useState({ name: 'Guest', email: '' });
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        setUser({ name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Member', email: firebaseUser.email || '', uid: firebaseUser.uid });
+      } else {
+        setUser({ name: 'Guest', email: '', uid: null });
+      }
+    });
+    return unsubscribe;
+  }, []);
+  const [coinBalance, setCoinBalance] = useState(0);
+
+  useEffect(() => {
+    if (!user.uid) {
+      setCoinBalance(0);
+      return;
+    }
+    const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (snapshot) => {
+      if (snapshot.exists()) {
+        setCoinBalance(Number(snapshot.data().coinBalance) || 0);
+      } else {
+        setCoinBalance(0);
+      }
+    }, (error) => {
+      console.error('Coin balance read error:', error);
+    });
+    return unsubscribe;
+  }, [user.uid]);
+
+  return (
+    <React.Fragment>
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <Navbar user={user} coinBalance={coinBalance} />
+        <div style={{ flex: 1 }}>
+          <Routes>
+            <Route path="/" element={<Home setCoinBalance={setCoinBalance} />} />
+            <Route path="/dashboard" element={<Dashboard user={user} coinBalance={coinBalance} setCoinBalance={setCoinBalance} />} />
+            <Route path="/quiz" element={<Quiz setCoinBalance={setCoinBalance} />} />
+            <Route path="/tasks" element={<Tasks setCoinBalance={setCoinBalance} />} />
+            <Route path="/wallet" element={<Wallet coinBalance={coinBalance} />} />
+            <Route path="/rewards" element={<RewardRequests coinBalance={coinBalance} setCoinBalance={setCoinBalance} />} />
+            <Route path="/watch-earn" element={<WatchEarn />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/about" element={<StaticPage title="About CoinMitra" content="CoinMitra is India's premier educational and recreational rewards platform. We empower adults across India with financial literacy, daily brain quizzes, and engaging tasks while maintaining transparent demo coin accounting." />} />
+            <Route path="/contact" element={<StaticPage title="Contact Support" content="Have questions or need assistance? Reach out to our support team at support@coinmitra.in. We are available Monday to Saturday, 9 AM to 6 PM IST." />} />
+            <Route path="/privacy" element={<StaticPage title="Privacy Policy" content="At CoinMitra, your privacy is our top priority. We adhere strictly to Indian data protection standards and never share your personal information with third-party advertisers." />} />
+            <Route path="/terms" element={<StaticPage title="Terms & Conditions" content="By using CoinMitra, you agree to our terms of service. All balances are currently in DEMO mode (1000 Demo Coins = ₹10 illustrative reward value) until formal regulatory approval and payment gateway integration." />} />
+          </Routes>
+        </div>
+        <Footer />
+      </div>
+    </React.Fragment>
+  );
+}
+
+export default App;
