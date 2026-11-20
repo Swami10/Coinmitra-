@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { auth, db } from "./firebase.js";
 import { doc, onSnapshot } from "firebase/firestore";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "firebase/auth";
 import { 
   Coins, Award, BookOpen, Gamepad2, CheckSquare, Wallet as WalletIcon, History, 
   ShieldCheck, Users, Info, Phone, FileText, Lock, CheckCircle, Clock, 
@@ -572,6 +572,7 @@ const Login = () => {
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} required style={{ padding: '14px' }} />
           <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required style={{ padding: '14px' }} />
+          <button type="button" onClick={async () => { if (!email) { alert("Please enter your email address first."); return; } try { await sendPasswordResetEmail(auth, email); alert("Password reset link sent to your email."); } catch (err) { alert(err.message); } }} style={{ background: "transparent", color: "#f39c12", padding: "8px", cursor: "pointer" }}>Forgot Password?</button>
           {error && <p style={{ color: '#ff7777' }}>{error}</p>}
           <button type="submit" disabled={loading} style={{ padding: '14px', background: '#f39c12', borderRadius: '10px', fontWeight: 'bold' }}>
             {loading ? 'Please wait...' : 'Login'}
