@@ -2,13 +2,15 @@ import Register from "./Register.jsx";
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { auth, db } from "./firebase.js";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, runTransaction, serverTimestamp } from "firebase/firestore";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "firebase/auth";
 import { 
   Coins, Award, BookOpen, Gamepad2, CheckSquare, Wallet as WalletIcon, History, 
   ShieldCheck, Users, Info, Phone, FileText, Lock, CheckCircle, Clock, 
   ArrowRight, Menu, X, UserCheck, Sparkles, TrendingUp, Gift
 } from 'lucide-react';
+
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
 // --- COMPONENTS ---
 
@@ -131,20 +133,29 @@ const Home = ({ addCoins }) => {
 };
 
 const Dashboard = ({ user, coinBalance, setCoinBalance }) => {
-  const [checkedIn, setCheckedIn] = useState(false); 
+  const [checkedIn, setCheckedIn] = useState(false);
+  const todayKey = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit'
+  }).format(new Date());
 
   useEffect(() => {
     const checkStatus = async () => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
       try {
-        const currentUser = auth.currentUser;
-        if (!currentUser) return;
-        const token = await currentUser.getIdToken();
-        const response = await fetch('/api/daily-checkin/status', {
-          headers: { Authorization: 'Bearer ' + token }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setCheckedIn(data.checkedIn);
+        const claimRef = doc(db, 'dailyClaims', currentUser.uid);
+        const legacyRef = doc(db, 'dailyClaims', currentUser.uid + '_' + todayKey);
+        const { getDoc } = await import('firebase/firestore');
+        const [snap, legacySnap] = await Promise.all([getDoc(claimRef), getDoc(legacyRef)]);
+        if (legacySnap.exists()) {
+          setCheckedIn(true);
+          return;
+        }
+        if (snap.exists()) {
+          const claimedAt = snap.data().claimedAt?.toDate?.();
+          if (claimedAt && Date.now() - claimedAt.getTime() < 24 * 60 * 60 * 1000) {
+            setCheckedIn(true);
+          }
         }
       } catch (error) {
         console.error('Check-in status error:', error);
@@ -153,42 +164,47 @@ const Dashboard = ({ user, coinBalance, setCoinBalance }) => {
     checkStatus();
   }, [user]);
 
-
   const handleDailyCheckin = async () => {
     if (checkedIn) return;
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      alert('Please login first.');
+      return;
+    }
 
     try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        alert("Please login first.");
-        return;
-      }
+      const userRef = doc(db, 'users', currentUser.uid);
+      const claimRef = doc(db, 'dailyClaims', currentUser.uid);
+      const legacyRef = doc(db, 'dailyClaims', currentUser.uid + '_' + todayKey);
 
-      const token = await currentUser.getIdToken();
-      const response = await fetch('/api/daily-checkin', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + token
+      await runTransaction(db, async (transaction) => {
+        const userSnap = await transaction.get(userRef);
+        const claimSnap = await transaction.get(claimRef);
+        const legacySnap = await transaction.get(legacyRef);
+
+        if (legacySnap.exists()) throw new Error('You have already claimed today\'s bonus.');
+        if (!userSnap.exists()) throw new Error('User account not found.');
+
+        if (claimSnap.exists()) {
+          const previous = claimSnap.data().claimedAt?.toDate?.();
+          if (previous && Date.now() - previous.getTime() < 24 * 60 * 60 * 1000) {
+            throw new Error('You have already claimed your daily bonus.');
+          }
         }
+
+        const balance = Number(userSnap.data().coinBalance) || 0;
+        transaction.update(userRef, { coinBalance: balance + 2 });
+        transaction.set(claimRef, {
+          userId: currentUser.uid,
+          points: 2,
+          claimedAt: serverTimestamp()
+        });
       });
 
-      const data = await response.json();
-
-      if (response.status === 409) {
-        setCheckedIn(true);
-        alert("You have already claimed today's 2 Points.");
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Check-in failed');
-      }
-
       setCheckedIn(true);
-      setCoinBalance(data.newBalance);
-      alert("Daily Check-in successful! +2 Points added.");
+      alert('Daily Check-in successful! +2 Points added.');
     } catch (error) {
-      alert(error.message || "Please try again.");
+      alert(error.message || 'Check-in failed. Please try again.');
     }
   };
 
