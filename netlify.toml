@@ -1,0 +1,19 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/daily-checkin/status"
+  to = "/.netlify/functions/daily-checkin-status"
+  status = 200
+
+[[redirects]]
+  from = "/api/daily-checkin"
+  to = "/.netlify/functions/daily-checkin"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
