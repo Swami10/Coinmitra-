@@ -659,6 +659,109 @@ const PrivacyPolicy = () => (
   </div>
 );
 
+
+const TermsConditions = () => (
+  <div style={{ maxWidth: '900px', margin: '40px auto', padding: '20px', color: '#dbe4f0' }}>
+    <div style={{ background: '#1b263b', border: '1px solid #27374d', borderRadius: '16px', padding: '28px', lineHeight: '1.8' }}>
+      <h1 style={{ color: '#ffffff' }}>Terms & Conditions</h1>
+      <p>Last Updated: November 21, 2026</p>
+
+      <p>Welcome to CoinMitra. These Terms & Conditions explain the rules for accessing and using our website. By using CoinMitra, you agree to these terms.</p>
+
+      <h3>1. About CoinMitra</h3>
+      <p>CoinMitra is an online platform offering educational, recreational and engagement-based activities. Features may include quizzes, daily check-ins and demo reward points.</p>
+
+      <h3>2. Eligibility and User Accounts</h3>
+      <p>CoinMitra is intended for users aged 18 years or older. You agree to provide accurate information when creating an account and to keep your login credentials secure. You are responsible for activity carried out through your account.</p>
+
+      <h3>3. Demo Coins and Illustrative Value</h3>
+      <p>Coins and balances currently displayed on CoinMitra are demo or illustrative points only. Any displayed conversion, including 1000 Demo Coins = ₹10, is an example for demonstration purposes only.</p>
+      <p>Demo Coins are not money, deposits, investments or cryptocurrency. They have no guaranteed monetary value and cannot currently be exchanged for cash, goods or services.</p>
+
+      <h3>4. Rewards and Withdrawals</h3>
+      <p>CoinMitra does not currently promise cash payments, withdrawals, prizes or other real-world rewards in exchange for demo coins. Any future reward or redemption program will require a separate official announcement and applicable terms. Do not make financial decisions based on demo balances.</p>
+
+      <h3>5. Acceptable Use</h3>
+      <p>You agree not to misuse the website, manipulate quizzes or reward features, use bots or unauthorized tools, interfere with website operations, attempt unauthorized access, or engage in unlawful, fraudulent or abusive activity.</p>
+
+      <h3>6. Fair Use and Account Restrictions</h3>
+      <p>Where we reasonably believe that an account is being used in violation of these terms or applicable law, we may investigate and take appropriate action, including restricting or suspending access, subject to applicable law.</p>
+
+      <h3>7. Website Availability and Changes</h3>
+      <p>We may update, modify, suspend or discontinue website features, activities, content or demo points. We aim to keep the website available but do not guarantee uninterrupted or error-free access.</p>
+
+      <h3>8. Intellectual Property</h3>
+      <p>Website design, branding, text, graphics and original materials are owned by CoinMitra or their respective rights holders. You may not reproduce, distribute or commercially use protected materials without permission, except where permitted by law.</p>
+
+      <h3>9. Third-Party Services and Links</h3>
+      <p>The website may contain links to third-party websites or use third-party services. These services are governed by their own terms and privacy policies. CoinMitra is not responsible for independent third-party content or services.</p>
+
+      <h3>10. Disclaimer and Limitation</h3>
+      <p>The website and its demo features are provided on an as-available basis. To the extent permitted by law, CoinMitra does not guarantee that every feature will always be available, accurate or suitable for every purpose. Nothing in these terms excludes rights or remedies that cannot legally be excluded.</p>
+
+      <h3>11. Privacy</h3>
+      <p>Your use of CoinMitra is also subject to our Privacy Policy, which explains how information may be collected and used.</p>
+
+      <h3>12. Changes to These Terms</h3>
+      <p>We may revise these Terms & Conditions from time to time. Updated terms will be published on this page with a revised date. Please review this page periodically.</p>
+
+      <h3>13. Contact Us</h3>
+      <p>If you have questions about these terms, please contact us through the Contact Us page on CoinMitra.</p>
+
+      <p style={{ marginTop: '28px', color: '#9ca3af' }}>Thank you for using CoinMitra.</p>
+    </div>
+  </div>
+);
+
+
+const AboutUs = () => (
+  <div style={{ maxWidth: '900px', margin: '40px auto', padding: '20px', color: '#dbe4f0' }}>
+    <div style={{ background: '#1b263b', border: '1px solid #27374d', borderRadius: '16px', padding: '28px', lineHeight: '1.8' }}>
+      <h1 style={{ color: '#ffffff' }}>About CoinMitra</h1>
+      <p>Welcome to CoinMitra, an online platform designed to make learning and everyday engagement more enjoyable.</p>
+
+      <h3>Our Purpose</h3>
+      <p>Our aim is to provide a simple and accessible platform where users can explore educational and recreational activities, test their knowledge and participate in interactive experiences.</p>
+
+      <h3>What We Offer</h3>
+      <ul>
+        <li>Educational quizzes and knowledge activities.</li>
+        <li>Daily check-in features.</li>
+        <li>Interactive activities and brain challenges.</li>
+        <li>Demo coin points to illustrate platform features.</li>
+      </ul>
+
+      <h3>Our Commitment</h3>
+      <p>We aim to make CoinMitra easy to use, transparent about its features and respectful of user privacy. Demo coins are currently illustrative points and do not represent real money or guaranteed rewards.</p>
+
+      <h3>Our Approach</h3>
+      <p>We continue to improve the platform and its features based on usability, clarity and user feedback.</p>
+
+      <p>Thank you for being a part of CoinMitra.</p>
+    </div>
+  </div>
+);
+
+const ContactUs = () => (
+  <div style={{ maxWidth: '900px', margin: '40px auto', padding: '20px', color: '#dbe4f0' }}>
+    <div style={{ background: '#1b263b', border: '1px solid #27374d', borderRadius: '16px', padding: '28px', lineHeight: '1.8' }}>
+      <h1 style={{ color: '#ffffff' }}>Contact Us</h1>
+      <p>We value your feedback and are happy to hear from you.</p>
+
+      <h3>Customer Support</h3>
+      <p>For questions, feedback, technical issues or privacy-related requests, contact us by email.</p>
+
+      <p><strong>Email:</strong> <a href="mailto:supportcoinmitra@gmail.com" style={{ color: '#60a5fa' }}>supportcoinmitra@gmail.com</a></p>
+
+      <h3>How to Contact Us</h3>
+      <p>Please include a brief description of your question or issue in your email. Do not include your password, OTP or sensitive payment information.</p>
+
+      <p>We will review your message and respond when possible.</p>
+      <p>Thank you for contacting CoinMitra.</p>
+    </div>
+  </div>
+);
+
 // --- MAIN APP ---
 
 function App() {
@@ -710,10 +813,10 @@ function App() {
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/about" element={<StaticPage title="About CoinMitra" content="CoinMitra is India's premier educational and recreational rewards platform. We empower adults across India with financial literacy, daily brain quizzes, and engaging tasks while maintaining transparent demo coin accounting." />} />
-            <Route path="/contact" element={<StaticPage title="Contact Support" content="Have questions or need assistance? Reach out to our support team at support@coinmitra.in. We are available Monday to Saturday, 9 AM to 6 PM IST." />} />
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/contact" element={<ContactUs />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/terms" element={<StaticPage title="Terms & Conditions" content="By using CoinMitra, you agree to our terms of service. All balances are currently in DEMO mode (1000 Demo Coins = ₹10 illustrative reward value) until formal regulatory approval and payment gateway integration." />} />
+            <Route path="/terms" element={<TermsConditions />} />
           </Routes>
         </div>
         <Footer />
