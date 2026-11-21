@@ -132,7 +132,7 @@ const Home = ({ addCoins }) => {
   );
 };
 
-const Dashboard = ({ user, coinBalance, setCoinBalance }) => {
+const Dashboard = ({ user, coinBalance, setCoinBalance, adPoints }) => {
   const [checkedIn, setCheckedIn] = useState(false);
   const todayKey = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit'
@@ -220,6 +220,7 @@ const Dashboard = ({ user, coinBalance, setCoinBalance }) => {
             <div style={{ fontSize: '12px', color: '#a0aec0' }}>Available Balance</div>
             <div style={{ fontSize: '20px', fontWeight: '800', color: '#f39c12' }}>{coinBalance.toLocaleString()} Coins</div>
           </div>
+          <div style={{ color: "#38d9a9", fontWeight: "700", fontSize: "14px" }}>Ad Points: {adPoints.toLocaleString()}</div>
           <Link to="/wallet" style={{ background: '#f39c12', color: '#0d1b2a', padding: '8px 14px', borderRadius: '8px', fontWeight: '700', fontSize: '13px' }}>Redeem</Link>
         </div>
       </div>
@@ -611,56 +612,49 @@ const StaticPage = ({ title, content }) => (
   </div>
 );
 
+
 const PrivacyPolicy = () => (
   <div style={{ maxWidth: '900px', margin: '40px auto', padding: '20px', color: '#dbe4f0' }}>
     <div style={{ background: '#1b263b', border: '1px solid #27374d', borderRadius: '16px', padding: '28px', lineHeight: '1.8' }}>
       <h1 style={{ color: '#ffffff' }}>Privacy Policy</h1>
       <p>Last Updated: November 21, 2026</p>
 
-      <p>At CoinMitra, we respect your privacy. This Privacy Policy explains how information may be collected, used, stored and protected when you visit or use our website.</p>
+      <p>CoinMitra respects your privacy. This policy explains how information may be collected and used when you visit our website.</p>
 
-      <h3>1. Information We May Collect</h3>
-      <p>Depending on the features you use, we may collect information that you voluntarily provide, such as your name, email address or account details. We may also collect basic technical information, including browser type, device information, IP address, pages visited and website usage data.</p>
-      <p>Please do not submit passwords, payment card details or other sensitive personal information through public forms or messages.</p>
+      <h3>1. Information We Collect</h3>
+      <p>Depending on the features you use, we may collect information you provide, such as your name, email address and account details. Technical information such as browser type, device information, IP address and pages visited may also be collected.</p>
 
       <h3>2. How We Use Information</h3>
-      <p>Information may be used to operate and maintain CoinMitra, provide website features, manage accounts and demo coin balances, respond to support requests, improve user experience, prevent misuse and maintain website security.</p>
+      <p>We may use information to operate the website, manage accounts and demo coin balances, respond to support requests, improve services, maintain security and prevent misuse.</p>
 
-      <h3>3. Cookies and Similar Technologies</h3>
-      <p>CoinMitra and certain third-party services may use cookies or similar technologies to remember preferences, understand website usage, support website functionality and display advertisements. You can manage or disable cookies through your browser settings. Some website features may not work properly if cookies are disabled.</p>
+      <h3>3. Cookies</h3>
+      <p>Our website and third-party services may use cookies or similar technologies for website functionality, preferences, analytics and advertising. You can manage cookies through your browser settings.</p>
 
       <h3>4. Google AdSense and Advertising</h3>
-      <p>Our website may display advertisements provided by Google AdSense and other advertising partners. Google and its partners may use cookies, device identifiers or similar technologies to serve and measure advertisements.</p>
-      <p>Depending on your location, consent choices and applicable requirements, advertisements may be personalized or non-personalized. Google's use of advertising cookies is subject to Google's own privacy policies.</p>
-      <p>You can learn more about how Google uses information at:
-        {' '}<a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa' }}>Google Advertising Policies</a>.
-      </p>
-      <p>You can manage Google's ad personalization settings at:
-        {' '}<a href="https://myadcenter.google.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa' }}>Google My Ad Center</a>.
-      </p>
+      <p>Our website may display advertisements from Google AdSense and other advertising partners. These providers may use cookies or similar technologies to serve and measure advertisements. Ad personalization may depend on your location and consent choices.</p>
+      <p>Learn more: <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa' }}>Google Advertising Policies</a>.</p>
+      <p>Manage ad preferences: <a href="https://myadcenter.google.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa' }}>Google My Ad Center</a>.</p>
 
       <h3>5. Third-Party Services</h3>
-      <p>We may use third-party services to support website hosting, security, analytics, authentication and advertising. These providers may process information according to their own privacy policies and applicable terms. We do not control the privacy practices of independent third-party websites.</p>
+      <p>We may use third-party providers for hosting, authentication, security, analytics or advertising. Their handling of information is governed by their own policies.</p>
 
-      <h3>6. Data Sharing</h3>
-      <p>We do not sell personal information to third parties. Information may be shared with service providers when necessary to operate the website, when required by law, or to protect the rights, security and integrity of CoinMitra and its users.</p>
+      <h3>6. Sharing of Information</h3>
+      <p>We do not sell personal information. Information may be shared with service providers when necessary to operate the website, comply with law or protect users and our services.</p>
 
       <h3>7. Data Security and Retention</h3>
-      <p>We take reasonable measures to protect information against unauthorized access, loss or misuse. However, no method of online transmission or electronic storage is completely secure. Information is retained only for as long as reasonably necessary for the purposes described in this policy or as required by law.</p>
+      <p>We take reasonable steps to protect information. No online storage or transmission method is completely secure. Information is retained as reasonably necessary for its intended purpose or as required by law.</p>
 
       <h3>8. Your Choices and Rights</h3>
-      <p>Subject to applicable law, you may request access to, correction of or deletion of personal information that you have provided to us. You may also manage browser cookies and advertising preferences through the relevant settings. Contact us through our Contact Us page for privacy-related requests.</p>
+      <p>Subject to applicable law, you may request access to, correction of or deletion of personal information you provided. Contact us through the Contact Us page for privacy requests.</p>
 
       <h3>9. Children's Privacy</h3>
-      <p>CoinMitra is intended for adult users and is not designed for children under 18. We do not knowingly seek to collect personal information from children. If you believe a child has provided personal information, please contact us so that we can review the matter.</p>
+      <p>CoinMitra is intended for adults and is not designed for children under 18. If you believe a child has provided personal information, please contact us.</p>
 
       <h3>10. Changes to This Policy</h3>
-      <p>We may update this Privacy Policy from time to time. Any changes will be published on this page with an updated revision date. Continued use of the website after changes are published indicates that you have read the updated policy.</p>
+      <p>We may update this policy from time to time. Changes will be published on this page with a revised date.</p>
 
       <h3>11. Contact Us</h3>
-      <p>If you have questions, concerns or requests regarding this Privacy Policy or your personal information, please contact us through the Contact Us page on CoinMitra.</p>
-
-      <p style={{ marginTop: '28px', color: '#9ca3af' }}>Thank you for using CoinMitra.</p>
+      <p>For questions about this policy or your personal information, please use the Contact Us page on CoinMitra.</p>
     </div>
   </div>
 );
@@ -680,6 +674,7 @@ function App() {
     return unsubscribe;
   }, []);
   const [coinBalance, setCoinBalance] = useState(0);
+  const [adPoints, setAdPoints] = useState(0);
 
   useEffect(() => {
     if (!user.uid) {
@@ -689,6 +684,7 @@ function App() {
     const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (snapshot) => {
       if (snapshot.exists()) {
         setCoinBalance(Number(snapshot.data().coinBalance) || 0);
+        setAdPoints(Number(snapshot.data().adPoints) || 0);
       } else {
         setCoinBalance(0);
       }
@@ -705,7 +701,7 @@ function App() {
         <div style={{ flex: 1 }}>
           <Routes>
             <Route path="/" element={<Home setCoinBalance={setCoinBalance} />} />
-            <Route path="/dashboard" element={<Dashboard user={user} coinBalance={coinBalance} setCoinBalance={setCoinBalance} />} />
+            <Route path="/dashboard" element={<Dashboard user={user} coinBalance={coinBalance} adPoints={adPoints} setCoinBalance={setCoinBalance} />} />
             <Route path="/quiz" element={<Quiz setCoinBalance={setCoinBalance} />} />
             <Route path="/tasks" element={<Tasks setCoinBalance={setCoinBalance} />} />
             <Route path="/wallet" element={<Wallet coinBalance={coinBalance} />} />
@@ -716,7 +712,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/about" element={<StaticPage title="About CoinMitra" content="CoinMitra is India's premier educational and recreational rewards platform. We empower adults across India with financial literacy, daily brain quizzes, and engaging tasks while maintaining transparent demo coin accounting." />} />
             <Route path="/contact" element={<StaticPage title="Contact Support" content="Have questions or need assistance? Reach out to our support team at support@coinmitra.in. We are available Monday to Saturday, 9 AM to 6 PM IST." />} />
-            <Route path="/privacy" element={<StaticPage title="Privacy Policy" content="At CoinMitra, your privacy is our top priority. We adhere strictly to Indian data protection standards and never share your personal information with third-party advertisers." />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<StaticPage title="Terms & Conditions" content="By using CoinMitra, you agree to our terms of service. All balances are currently in DEMO mode (1000 Demo Coins = ₹10 illustrative reward value) until formal regulatory approval and payment gateway integration." />} />
           </Routes>
         </div>
