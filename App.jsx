@@ -18,7 +18,7 @@ const Navbar = ({ user, coinBalance }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navLinks = (<>
     <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
-    <Link to="/quiz" onClick={() => setMobileMenuOpen(false)}>Quiz</Link>
+    <Link to="/games" onClick={() => setMobileMenuOpen(false)}>Games</Link>
     <Link to="/wallet" onClick={() => setMobileMenuOpen(false)}>Wallet</Link>
     <Link to="/admin" className="admin-link" onClick={() => setMobileMenuOpen(false)}>Admin</Link>
     {user.email ? <button className="logout-link" onClick={() => { setMobileMenuOpen(false); signOut(auth); }}>Logout</button> : <Link to="/login" className="login-link" onClick={() => setMobileMenuOpen(false)}>Login</Link>}
@@ -145,7 +145,7 @@ const Home = ({ addCoins }) => {
       <div className="coin-feature-grid">
         {[
           { icon: <CheckSquare size={32} color="#f39c12" />, title: "Daily Check-in", desc: "Claim streak bonuses every 24 hours without duplication." },
-          { icon: <Gamepad2 size={32} color="#f39c12" />, title: "Quizzes & Games", desc: "Test your knowledge on general awareness and digital safety." },
+          { icon: <Gamepad2 size={32} color="#f39c12" />, title: "Games", desc: "Enjoy Spin & Win, Coin Catcher and Mystery Box." },
           { icon: <BookOpen size={32} color="#f39c12" />, title: "Educational Videos", desc: "Learn financial literacy and explore educational content." },
           { icon: <WalletIcon size={32} color="#f39c12" />, title: "Demo Coin Wallet", desc: "Track your demo coin balance and activity." }
         ].map((item, idx) => (
@@ -266,7 +266,7 @@ const Dashboard = ({ user, coinBalance, setCoinBalance, adPoints }) => {
       <h3 style={{ color: '#ffffff', marginBottom: '20px' }}>Explore Activities</h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
         {[
-          { title: 'Quiz & Brain Games', desc: 'Answer questions & earn up to 500 coins', link: '/quiz', icon: <Gamepad2 color="#f39c12" /> },
+          { title: 'Games', desc: 'Play Spin & Win, Coin Catcher and Mystery Box', link: '/games', icon: <Gamepad2 color="#f39c12" /> },
           { title: 'Sponsored Tasks', desc: 'Complete app installs & offers', link: '/tasks', icon: <CheckSquare color="#f39c12" /> },
           { title: 'Educational Videos', desc: 'Watch & learn financial literacy', link: '/videos', icon: <BookOpen color="#f39c12" /> },
           { title: 'Watch & Earn', desc: 'Watch optional rewarded ads and earn eligible Points', link: '/watch-earn', icon: <Gift color="#f39c12" /> },
@@ -287,73 +287,128 @@ const Dashboard = ({ user, coinBalance, setCoinBalance, adPoints }) => {
   );
 };
 
-const Quiz = ({ setCoinBalance }) => {
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [score, setScore] = useState(0);
-  const [quizFinished, setQuizFinished] = useState(false);
+const Games = () => {
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  const [catchCount, setCatchCount] = useState(0);
 
-  const questions = [
-    { q: "What does UPI stand for in Indian digital payments?", options: ["Unified Payment Interface", "Universal Personal Income", "United Payment Institution", "Union Payment India"], correct: 0 },
-    { q: "Which of the following is safest when receiving a UPI payment?", options: ["Sharing your UPI PIN", "Entering your UPI PIN", "Scanning a QR code without entering PIN", "Sharing your ATM card number"], correct: 2 },
-    { q: "What is the recommended emergency fund savings duration?", options: ["1 week", "1 month", "3 to 6 months of expenses", "10 years"], correct: 2 },
-    { q: "Which institution regulates banking and currency in India?", options: ["SEBI", "RBI", "IRDAI", "NABARD"], correct: 1 }
-  ];
-
-  const handleAnswer = (optionIndex) => {
-    if (optionIndex === questions[currentQuestion].correct) {
-      setScore(prev => prev + 1);
+  const playGame = async (game) => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      setMessage('Please login to play games.');
+      return;
     }
-    const nextQ = currentQuestion + 1;
-    if (nextQ < questions.length) {
-      setCurrentQuestion(nextQ);
-    } else {
-      setQuizFinished(true);
-      const earned = (score + (optionIndex === questions[currentQuestion].correct ? 1 : 0)) * 100;
-      setCoinBalance(prev => prev + earned);
+
+    setBusy(true);
+    setMessage('Checking your play...');
+    try {
+      const token = await currentUser.getIdToken();
+      const response = await fetch(`${API_BASE_URL}/.netlify/functions/games`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ game })
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMessage(data.message || 'Daily play limit reached. Try again tomorrow!');
+      } else {
+        setMessage(data.points > 0
+          ? `You won ${data.points} Demo Points! Your Wallet will update automatically.`
+          : 'No points this time. Try again tomorrow!');
+      }
+    } catch (error) {
+      console.error('Game reward error:', error);
+      setMessage('Could not connect. Please try again.');
+    } finally {
+      setBusy(false);
+      setCatchCount(0);
     }
   };
 
-  return (
-    <div style={{ maxWidth: '800px', margin: '40px auto', padding: '20px' }}>
-      <div style={{ background: '#1b263b', border: '1px solid #27374d', borderRadius: '20px', padding: '40px' }}>
-        <h2 style={{ color: '#ffffff', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Gamepad2 color="#f39c12" /> Daily Knowledge & Safety Quiz
-        </h2>
-        <p style={{ color: '#a0aec0', marginBottom: '30px' }}>Test your financial literacy and win up to 400 Demo Coins.</p>
+  const catchCoin = () => {
+    if (busy) return;
+    const next = catchCount + 1;
+    setCatchCount(next);
+    if (next >= 10) playGame('catcher');
+  };
 
-        {!quizFinished ? (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#a0aec0', marginBottom: '15px', fontSize: '14px' }}>
-              <span>Question {currentQuestion + 1} of {questions.length}</span>
-              <span>Score: {score}</span>
-            </div>
-            <h3 style={{ color: '#ffffff', fontSize: '20px', marginBottom: '25px', lineHeight: '1.5' }}>
-              {questions[currentQuestion].q}
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {questions[currentQuestion].options.map((opt, idx) => (
-                <button key={idx} onClick={() => handleAnswer(idx)} style={{ background: '#27374d', color: '#ffffff', padding: '16px 20px', borderRadius: '12px', textAlign: 'left', fontWeight: '600', fontSize: '15px', border: '1px solid #415a77', transition: 'background 0.2s' }}>
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <div style={{ fontSize: '48px', marginBottom: '15px' }}>🏆</div>
-            <h3 style={{ color: '#ffffff', fontSize: '24px', marginBottom: '10px' }}>Quiz Completed Successfully!</h3>
-            <p style={{ color: '#a0aec0', fontSize: '16px', marginBottom: '20px' }}>You scored {score} out of {questions.length} correct.</p>
-            <div style={{ background: '#0d1b2a', padding: '15px', borderRadius: '12px', display: 'inline-block', color: '#f39c12', fontWeight: '700', fontSize: '18px', marginBottom: '30px', border: '1px solid #f39c12' }}>
-              +{score * 100} Demo Coins Credited to Wallet!
-            </div>
-            <div>
-              <button onClick={() => { setCurrentQuestion(0); setScore(0); setQuizFinished(false); }} style={{ background: '#f39c12', color: '#0d1b2a', padding: '12px 24px', borderRadius: '10px', fontWeight: '700' }}>
-                Play Again
-              </button>
-            </div>
-          </div>
-        )}
+  const cardStyle = {
+    background: '#1b263b',
+    border: '1px solid #33415c',
+    borderRadius: '16px',
+    padding: '22px',
+    textAlign: 'center',
+    color: '#fff'
+  };
+
+  const buttonStyle = {
+    background: '#f39c12',
+    color: '#111827',
+    border: 'none',
+    borderRadius: '10px',
+    padding: '12px 20px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    width: '100%',
+    marginTop: '14px'
+  };
+
+  return (
+    <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '35px 20px', color: '#fff' }}>
+      <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+        <h1 style={{ color: '#f5b942' }}>CoinMitra Games</h1>
+        <p>Play, enjoy and collect limited Demo Points!</p>
+        <small style={{ color: '#aab7cf' }}>Daily limits apply. Demo Points have no cash value.</small>
       </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '18px' }}>
+        <div style={cardStyle}>
+          <div style={{ fontSize: '42px' }}>🎡</div>
+          <h2>Spin & Win</h2>
+          <p>Try your luck with one spin every day.</p>
+          <button style={buttonStyle} disabled={busy} onClick={() => playGame('spin')}>
+            {busy ? 'Please wait...' : 'SPIN NOW'}
+          </button>
+        </div>
+
+        <div style={cardStyle}>
+          <div style={{ fontSize: '42px' }}>🪙</div>
+          <h2>Coin Catcher</h2>
+          <p>Tap the button 10 times to catch coins. Up to 3 plays daily.</p>
+          <div style={{ color: '#f5b942', fontSize: '20px', margin: '12px' }}>
+            {catchCount}/10
+          </div>
+          <button style={buttonStyle} disabled={busy} onClick={catchCoin}>
+            {busy ? 'Please wait...' : '🪙 CATCH COIN'}
+          </button>
+        </div>
+
+        <div style={cardStyle}>
+          <div style={{ fontSize: '42px' }}>🎁</div>
+          <h2>Mystery Box</h2>
+          <p>Open one mystery box every day. What is inside?</p>
+          <button style={buttonStyle} disabled={busy} onClick={() => playGame('mystery')}>
+            {busy ? 'Please wait...' : 'OPEN BOX'}
+          </button>
+        </div>
+      </div>
+
+      {message && (
+        <div style={{
+          marginTop: '24px',
+          padding: '16px',
+          borderRadius: '12px',
+          background: '#0d1b2a',
+          border: '1px solid #f39c12',
+          textAlign: 'center'
+        }}>
+          {message}
+        </div>
+      )}
     </div>
   );
 };
@@ -822,7 +877,8 @@ function App() {
     const pageSEO = {
       '/': ['CoinMitra - Earn, Learn, Play & Explore', 'Explore quizzes, educational activities and demo rewards on CoinMitra.'],
       '/dashboard': ['Dashboard - CoinMitra', 'View your CoinMitra demo account dashboard and activity.'],
-      '/quiz': ['Daily Quiz - CoinMitra', 'Play educational quizzes and test your knowledge on CoinMitra.'],
+      '/games': ['Games - CoinMitra', 'Play Spin & Win, Coin Catcher and Mystery Box on CoinMitra.'],
+      '/quiz': ['Games - CoinMitra', 'Play games on CoinMitra.'],
       '/tasks': ['Activities - CoinMitra', 'Explore available activities on CoinMitra.'],
       '/wallet': ['Demo Coin Wallet - CoinMitra', 'View your demo coin balance and wallet information.'],
       '/rewards': ['Demo Rewards - CoinMitra', 'Explore illustrative demo rewards on CoinMitra.'],
@@ -888,7 +944,8 @@ function App() {
           <Routes>
             <Route path="/" element={<Home setCoinBalance={setCoinBalance} />} />
             <Route path="/dashboard" element={<Dashboard user={user} coinBalance={coinBalance} adPoints={adPoints} setCoinBalance={setCoinBalance} />} />
-            <Route path="/quiz" element={<Quiz setCoinBalance={setCoinBalance} />} />
+            <Route path="/games" element={<Games />} />
+            <Route path="/quiz" element={<Games />} />
             <Route path="/tasks" element={<Tasks setCoinBalance={setCoinBalance} />} />
             <Route path="/wallet" element={<Wallet coinBalance={coinBalance} />} />
             <Route path="/rewards" element={<RewardRequests coinBalance={coinBalance} setCoinBalance={setCoinBalance} />} />
