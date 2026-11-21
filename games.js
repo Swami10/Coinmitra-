@@ -20,7 +20,10 @@ exports.handler = async (event) => {
     const rules = {
       spin: { max: 1, rewards: [0, 1, 2, 3, 5] },
       catcher: { max: 3, rewards: [1, 1, 2, 2, 3] },
-      mystery: { max: 1, rewards: [0, 2, 3, 5] }
+      mystery: { max: 1, rewards: [0, 2, 3, 5] },
+      hunt: { max: 1, rewards: [0, 1, 2, 3] },
+      difference: { max: 1, rewards: [0, 1, 2, 3] },
+      speed: { max: 1, rewards: [0, 1, 2, 3] }
     };
 
     if (!rules[game]) {

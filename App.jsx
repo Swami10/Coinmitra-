@@ -140,6 +140,44 @@ const Home = ({ addCoins }) => {
         </div>
       </section>
 
+
+      <section className="coin-fun-zone">
+        <style>{`
+          .coin-fun-zone { margin: 35px 0; text-align: center; }
+          .coin-fun-zone h2 { color: #fff; font-size: 28px; margin-bottom: 8px; }
+          .coin-fun-zone > p { color: #aab7cf; margin-bottom: 24px; }
+          .fun-zone-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+          .fun-zone-card { background: linear-gradient(145deg,#1b263b,#243b64); border: 1px solid #f5b942; border-radius: 22px; padding: 22px 12px; color: white; cursor: pointer; transition: transform .25s, box-shadow .25s; }
+          .fun-zone-card:hover { transform: translateY(-7px); box-shadow: 0 8px 28px #f5b94244; }
+          .fun-zone-icon { width: 86px; height: 86px; margin: 0 auto 13px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 43px; background: radial-gradient(circle at 30% 25%,#fff2bd,#f5b942 48%,#a65d08); border: 4px solid #ffe49a; box-shadow: 0 0 20px #f5b94266, inset 0 3px 8px #ffffff88; animation: funFloat 2.5s ease-in-out infinite; }
+          .fun-zone-card:nth-child(2) .fun-zone-icon { animation-delay: .3s; }
+          .fun-zone-card:nth-child(3) .fun-zone-icon { animation-delay: .6s; }
+          .fun-zone-card h3 { margin: 8px 0 5px; font-size: 17px; }
+          .fun-zone-card span { color: #c6d2e7; font-size: 12px; }
+          @keyframes funFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+          @media(max-width:600px) { .fun-zone-grid { gap: 9px; } .fun-zone-card { padding: 16px 5px; border-radius: 16px; } .fun-zone-icon { width: 65px; height: 65px; font-size: 32px; } .fun-zone-card h3 { font-size: 13px; } .fun-zone-card span { font-size: 10px; } }
+        `}</style>
+        <h2>🎮 CoinMitra Fun Zone</h2>
+        <p>Play • Enjoy • Discover Something New!</p>
+        <div className="fun-zone-grid">
+          <button className="fun-zone-card" onClick={() => navigate('/games')}>
+            <div className="fun-zone-icon">🔎</div>
+            <h3>Picture Hunt</h3>
+            <span>Find the hidden object</span>
+          </button>
+          <button className="fun-zone-card" onClick={() => navigate('/games')}>
+            <div className="fun-zone-icon">🖼️</div>
+            <h3>Spot Difference</h3>
+            <span>Find the differences</span>
+          </button>
+          <button className="fun-zone-card" onClick={() => navigate('/games')}>
+            <div className="fun-zone-icon">⚡</div>
+            <h3>Speed Tap</h3>
+            <span>Tap fast and have fun</span>
+          </button>
+        </div>
+      </section>
+
       <div className="coin-demo-note">⚠️ 1000 Demo Coins = ₹10 Illustrative Value — DEMO MODE ONLY</div>
 
       <div className="coin-feature-grid">
@@ -283,6 +321,24 @@ const Games = () => {
   const [score, setScore] = useState(0);
   const [basketPosition, setBasketPosition] = useState(50);
   const [coins, setCoins] = useState([]);
+  const [mysteryOpening, setMysteryOpening] = useState(false);
+  const [spinAnimating, setSpinAnimating] = useState(false);
+  const [huntItems, setHuntItems] = useState([]);
+  const [huntTarget, setHuntTarget] = useState('');
+  const [huntTime, setHuntTime] = useState(20);
+  const [huntActive, setHuntActive] = useState(false);
+  const [huntSubmitted, setHuntSubmitted] = useState(false);
+  const [diffBoard, setDiffBoard] = useState([]);
+  const [diffOriginal, setDiffOriginal] = useState([]);
+  const [diffIndex, setDiffIndex] = useState(-1);
+  const [diffTime, setDiffTime] = useState(20);
+  const [diffActive, setDiffActive] = useState(false);
+  const [diffSubmitted, setDiffSubmitted] = useState(false);
+  const [speedTime, setSpeedTime] = useState(15);
+  const [speedScore, setSpeedScore] = useState(0);
+  const [speedActive, setSpeedActive] = useState(false);
+  const [speedSubmitted, setSpeedSubmitted] = useState(false);
+
 
   const playGame = async (game) => {
     const currentUser = auth.currentUser;
@@ -322,6 +378,124 @@ const Games = () => {
       setBusy(false);
     }
   };
+
+
+  const startHunt = () => {
+    if (busy || huntActive) return;
+    if (!auth.currentUser) {
+      setMessage('Please login to play games.');
+      return;
+    }
+    const targets = ['🍓', '🚗', '🐸', '🎈', '🍕', '⭐'];
+    const target = targets[Math.floor(Math.random() * targets.length)];
+    const others = ['🍎', '🚲', '🐱', '⚽', '🍔', '🌙', '🌼', '🎁', '🐶', '🍇', '🚕', '🍉', '🎵', '🌈', '🧸', '🍪', '🐼', '🎯', '🌻', '🦋', '🍒', '🚀', '🐟', '🎲'];
+    const items = others.filter(item => item !== target).sort(() => Math.random() - 0.5).slice(0, 23);
+    items.splice(Math.floor(Math.random() * 24), 0, target);
+    setHuntTarget(target);
+    setHuntItems(items);
+    setHuntTime(20);
+    setHuntSubmitted(false);
+    setHuntActive(true);
+    setMessage('Find ' + target + ' before time runs out!');
+  };
+
+  const handleHuntTap = (item) => {
+    if (!huntActive || huntSubmitted || busy) return;
+    if (item !== huntTarget) {
+      setMessage('Not this one! Find ' + huntTarget);
+      return;
+    }
+    setHuntSubmitted(true);
+    setHuntActive(false);
+    setMessage('Correct! Checking your reward...');
+    playGame('hunt');
+  };
+
+  useEffect(() => {
+    if (!huntActive) return;
+    if (huntTime <= 0) {
+      setHuntActive(false);
+      setMessage('Time up! Try Picture Hunt tomorrow.');
+      return;
+    }
+    const timer = setTimeout(() => setHuntTime(t => t - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [huntActive, huntTime]);
+
+
+  const startDifference = () => {
+    if (busy || diffActive || diffSubmitted) return;
+    if (!auth.currentUser) {
+      setMessage('Please login to play games.');
+      return;
+    }
+    const symbols = ['🍎','🚗','🐸','⭐','🎈','🍕','🐱','🌻','⚽','🍇','🚀','🎁','🦋','🍉','🐼','🎯'];
+    const original = [...symbols];
+    const changed = [...symbols];
+    const index = Math.floor(Math.random() * symbols.length);
+    const alternatives = ['🍒','🚕','🐢','🌙','🎀','🍔','🐶','🌼','🏀','🍓','✈️','🎊','🐝','🍊','🐻','🎲'];
+    changed[index] = alternatives[index];
+    setDiffOriginal(original);
+    setDiffBoard(changed);
+    setDiffIndex(index);
+    setDiffTime(20);
+    setDiffSubmitted(false);
+    setDiffActive(true);
+    setMessage('Find the one different picture in the second board!');
+  };
+
+  const handleDifferenceTap = (index) => {
+    if (!diffActive || diffSubmitted || busy) return;
+    if (index === diffIndex) {
+      setDiffSubmitted(true);
+      setDiffActive(false);
+      setMessage('Correct difference found! Checking reward...');
+      playGame('difference');
+    } else {
+      setMessage('Not quite! Look carefully and try again.');
+    }
+  };
+
+  useEffect(() => {
+    if (!diffActive) return;
+    if (diffTime <= 0) {
+      setDiffActive(false);
+      setMessage('Time up! You can try Spot the Difference again.');
+      return;
+    }
+    const timer = setTimeout(() => setDiffTime(t => t - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [diffActive, diffTime]);
+
+  const startSpeedTap = () => {
+    if (busy || speedActive || speedSubmitted) return;
+    if (!auth.currentUser) {
+      setMessage('Please login to play games.');
+      return;
+    }
+    setSpeedScore(0);
+    setSpeedTime(15);
+    setSpeedSubmitted(false);
+    setSpeedActive(true);
+    setMessage('Tap the star as fast as you can!');
+  };
+
+  const handleSpeedTap = () => {
+    if (speedActive && !busy) setSpeedScore(score => score + 1);
+  };
+
+  useEffect(() => {
+    if (!speedActive) return;
+    if (speedTime <= 0) {
+      setSpeedActive(false);
+      setSpeedSubmitted(true);
+      setMessage('Time up! You tapped ' + speedScore + ' times. Checking reward...');
+      playGame('speed');
+      return;
+    }
+    const timer = setTimeout(() => setSpeedTime(t => t - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [speedActive, speedTime]);
 
   const startCatcher = () => {
     if (busy || gameActive) return;
@@ -427,13 +601,37 @@ const Games = () => {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '18px' }}>
-        <div style={cardStyle}>
-          <div style={{ fontSize: '42px' }}>🎡</div>
+        <div style={{ ...cardStyle, textAlign: 'center' }}>
+          <div style={{
+            width: '142px',
+            height: '142px',
+            borderRadius: '50%',
+            margin: '12px auto',
+            border: '6px solid #f5b942',
+            background: 'conic-gradient(#f39c12 0deg 72deg, #243b64 72deg 144deg, #f5b942 144deg 216deg, #243b64 216deg 288deg, #f39c12 288deg 360deg)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '38px',
+            boxShadow: '0 0 22px rgba(245,185,66,0.35)',
+            transform: spinAnimating ? 'rotate(1080deg)' : 'rotate(0deg)',
+            transition: spinAnimating ? 'transform 2s cubic-bezier(.15,.75,.25,1)' : 'none'
+          }}>🪙</div>
           <h2>Spin & Win</h2>
           <p>Try your luck with one spin every day.</p>
-          <button style={buttonStyle} disabled={busy} onClick={() => playGame('spin')}>
-            {busy ? 'Please wait...' : 'SPIN NOW'}
+          <button style={buttonStyle} disabled={busy || spinAnimating}
+            onClick={() => {
+              if (busy || spinAnimating) return;
+              setSpinAnimating(true);
+              setMessage('Spinning the wheel...');
+              setTimeout(() => {
+                setSpinAnimating(false);
+                playGame('spin');
+              }, 2100);
+            }}>
+            {spinAnimating ? 'WHEEL SPINNING...' : busy ? 'Please wait...' : '🎡 SPIN NOW'}
           </button>
+          <small style={{ color: '#aab7cf' }}>One rewarded spin per day</small>
         </div>
 
         <div style={cardStyle}>
@@ -448,7 +646,20 @@ const Games = () => {
             borderRadius: '12px',
             border: '1px solid #52627d',
             background: 'linear-gradient(180deg, #102b4e, #071426)',
-            marginTop: '14px'
+            marginTop: '14px',
+            touchAction: 'pan-y'
+          }}
+          onTouchMove={(e) => {
+            if (!gameActive) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = ((e.touches[0].clientX - rect.left) / rect.width) * 100;
+            setBasketPosition(Math.max(8, Math.min(92, x)));
+          }}
+          onClick={(e) => {
+            if (!gameActive) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            setBasketPosition(Math.max(8, Math.min(92, x)));
           }}>
             <div style={{
               position: 'absolute',
@@ -514,14 +725,88 @@ const Games = () => {
           <small style={{ color: '#aab7cf' }}>Maximum 3 rewarded plays per day</small>
         </div>
 
-        <div style={cardStyle}>
-          <div style={{ fontSize: '42px' }}>🎁</div>
+        <div style={{ ...cardStyle, textAlign: 'center' }}>
+          <div style={{
+            fontSize: '76px',
+            margin: '12px 0',
+            display: 'inline-block',
+            transform: mysteryOpening ? 'rotate(-12deg) scale(1.25)' : 'scale(1)',
+            transition: 'transform 0.35s ease'
+          }}>{mysteryOpening ? '🎉' : '🎁'}</div>
           <h2>Mystery Box</h2>
-          <p>Open one mystery box every day. What is inside?</p>
-          <button style={buttonStyle} disabled={busy} onClick={() => playGame('mystery')}>
-            {busy ? 'Please wait...' : 'OPEN BOX'}
+          <p>{mysteryOpening ? 'Your surprise is opening...' : 'Open your mystery box and discover your surprise!'}</p>
+          <button style={buttonStyle}
+            disabled={busy || mysteryOpening}
+            onClick={() => {
+              setMysteryOpening(true);
+              setMessage('Opening your mystery box...');
+              setTimeout(() => {
+                setMysteryOpening(false);
+                playGame('mystery');
+              }, 900);
+            }}>
+            {busy || mysteryOpening ? 'OPENING...' : '🎁 OPEN MYSTERY BOX'}
           </button>
+          <small style={{ color: '#aab7cf' }}>One rewarded play per day</small>
         </div>
+      </div>
+
+
+      <div className="picture-hunt-card" style={{ ...cardStyle, marginTop: '24px' }}>
+        <div style={{ fontSize: '42px' }}>🔎</div>
+        <h3 style={{ color: '#f5b942' }}>Picture Hunt</h3>
+        <p style={{ color: '#aab7cf' }}>Find the matching hidden picture in 20 seconds!</p>
+        <div style={{ fontSize: '20px', margin: '12px' }}>
+          {huntActive ? 'Find: ' + huntTarget + '  |  Time: ' + huntTime + 's' : 'Ready for the challenge?'}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '8px', maxWidth: '420px', margin: '16px auto' }}>
+          {huntItems.map((item, index) => (
+            <button key={index} onClick={() => handleHuntTap(item)}
+              disabled={!huntActive || huntSubmitted || busy}
+              style={{ ...buttonStyle, margin: 0, padding: '10px 2px', fontSize: '23px', background: '#0d1b2a' }}>
+              {item}
+            </button>
+          ))}
+        </div>
+        <button style={buttonStyle} onClick={startHunt} disabled={huntActive || busy || huntSubmitted}>
+          {huntSubmitted ? 'Completed Today' : huntActive ? 'Game in Progress' : '🔎 Start Picture Hunt'}
+        </button>
+        <small style={{ display: 'block', color: '#aab7cf', marginTop: '10px' }}>Demo Points are subject to daily limits.</small>
+      </div>
+
+
+      <div className="spot-difference-card" style={{ ...cardStyle, marginTop: '24px', textAlign: 'center' }}>
+        <div style={{ fontSize: '42px' }}>🖼️</div>
+        <h3 style={{ color: '#f5b942' }}>Spot the Difference</h3>
+        <p style={{ color: '#aab7cf' }}>Find the one changed picture in the second board!</p>
+        <p style={{ color: '#f5b942' }}>{diffActive ? 'Time: ' + diffTime + 's' : 'Compare both picture boards'}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '5px', maxWidth: '360px', margin: '10px auto' }}>
+          {diffOriginal.map((item, index) => <div key={index} style={{ background: '#0d1b2a', borderRadius: '8px', padding: '8px', fontSize: '22px' }}>{item}</div>)}
+        </div>
+        <small style={{ color: '#aab7cf' }}>Find the different one below</small>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '5px', maxWidth: '360px', margin: '10px auto' }}>
+          {diffBoard.map((item, index) => (
+            <button key={index} disabled={!diffActive || diffSubmitted || busy} onClick={() => handleDifferenceTap(index)} style={{ ...buttonStyle, margin: 0, padding: '8px', fontSize: '22px', background: '#0d1b2a' }}>{item}</button>
+          ))}
+        </div>
+        <button style={buttonStyle} disabled={diffActive || diffSubmitted || busy} onClick={startDifference}>
+          {diffSubmitted ? 'Completed Today' : diffActive ? 'Find the Difference!' : '🖼️ START CHALLENGE'}
+        </button>
+        <small style={{ display: 'block', color: '#aab7cf', marginTop: '8px' }}>One rewarded play per day</small>
+      </div>
+
+      <div className="speed-tap-card" style={{ ...cardStyle, marginTop: '24px', textAlign: 'center' }}>
+        <div style={{ fontSize: '42px' }}>⚡</div>
+        <h3 style={{ color: '#f5b942' }}>Speed Tap</h3>
+        <p style={{ color: '#aab7cf' }}>Tap the big star as many times as possible in 15 seconds!</p>
+        <h2 style={{ color: '#f5b942' }}>{speedActive ? speedTime + ' seconds' : '15 seconds challenge'}</h2>
+        <div style={{ fontSize: '22px', margin: '12px' }}>Your taps: {speedScore}</div>
+        <button onClick={handleSpeedTap} disabled={!speedActive || busy} style={{ ...buttonStyle, fontSize: '34px', padding: '22px', minWidth: '130px', background: speedActive ? '#f39c12' : '#33415c' }}>⭐</button>
+        <br />
+        <button style={buttonStyle} disabled={speedActive || speedSubmitted || busy} onClick={startSpeedTap}>
+          {speedSubmitted ? 'Completed Today' : speedActive ? 'KEEP TAPPING!' : '⚡ START SPEED TAP'}
+        </button>
+        <small style={{ display: 'block', color: '#aab7cf', marginTop: '8px' }}>One rewarded play per day</small>
       </div>
 
       {message && (
