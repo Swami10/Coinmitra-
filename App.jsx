@@ -201,37 +201,23 @@ const Dashboard = ({ user, coinBalance, setCoinBalance, adPoints }) => {
     }
 
     try {
-      const userRef = doc(db, 'users', currentUser.uid);
-      const claimRef = doc(db, 'dailyClaims', currentUser.uid);
-      const legacyRef = doc(db, 'dailyClaims', currentUser.uid + '_' + todayKey);
-
-      await runTransaction(db, async (transaction) => {
-        const userSnap = await transaction.get(userRef);
-        const claimSnap = await transaction.get(claimRef);
-        const legacySnap = await transaction.get(legacyRef);
-
-        if (legacySnap.exists()) throw new Error('You have already claimed today\'s bonus.');
-        if (!userSnap.exists()) throw new Error('User account not found.');
-
-        if (claimSnap.exists()) {
-          const previous = claimSnap.data().claimedAt?.toDate?.();
-          if (previous && Date.now() - previous.getTime() < 24 * 60 * 60 * 1000) {
-            throw new Error('You have already claimed your daily bonus.');
-          }
-        }
-
-        const balance = Number(userSnap.data().coinBalance) || 0;
-        transaction.update(userRef, { coinBalance: balance + 2 });
-        transaction.set(claimRef, {
-          userId: currentUser.uid,
-          points: 2,
-          claimedAt: serverTimestamp()
-        });
+      const token = await currentUser.getIdToken();
+      const response = await fetch('/.netlify/functions/daily-checkin', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token }
       });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || 'Check-in failed.');
+      }
 
       setCheckedIn(true);
       alert('Daily Check-in successful! +2 Points added.');
     } catch (error) {
+      if (error.message && error.message.includes('Already claimed')) {
+        setCheckedIn(true);
+      }
       alert(error.message || 'Check-in failed. Please try again.');
     }
   };
@@ -290,7 +276,13 @@ const Dashboard = ({ user, coinBalance, setCoinBalance, adPoints }) => {
 const Games = () => {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
-  const [catchCount, setCatchCount] = useState(0);
+  const [gameActive, setGameActive] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(30);
+  const [score, setScore] = useState(0);
+  const [basketPosition, setBasketPosition] = useState(50);
+  const [coins, setCoins] = useState([]);
 
   const playGame = async (game) => {
     const currentUser = auth.currentUser;
@@ -303,21 +295,24 @@ const Games = () => {
     setMessage('Checking your play...');
     try {
       const token = await currentUser.getIdToken();
-      const response = await fetch(`${API_BASE_URL}/.netlify/functions/games`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ game })
-      });
+      const response = await fetch(
+        API_BASE_URL + '/.netlify/functions/games',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token
+          },
+          body: JSON.stringify({ game })
+        }
+      );
       const data = await response.json();
 
       if (!response.ok) {
-        setMessage(data.message || 'Daily play limit reached. Try again tomorrow!');
+        setMessage(data.message || 'Daily play limit reached. Try tomorrow!');
       } else {
         setMessage(data.points > 0
-          ? `You won ${data.points} Demo Points! Your Wallet will update automatically.`
+          ? 'You won ' + data.points + ' Demo Points! Wallet will update automatically.'
           : 'No points this time. Try again tomorrow!');
       }
     } catch (error) {
@@ -325,16 +320,82 @@ const Games = () => {
       setMessage('Could not connect. Please try again.');
     } finally {
       setBusy(false);
-      setCatchCount(0);
     }
   };
 
-  const catchCoin = () => {
-    if (busy) return;
-    const next = catchCount + 1;
-    setCatchCount(next);
-    if (next >= 10) playGame('catcher');
+  const startCatcher = () => {
+    if (busy || gameActive) return;
+    if (!auth.currentUser) {
+      setMessage('Please login to play games.');
+      return;
+    }
+    setMessage('');
+    setScore(0);
+    setTimeLeft(30);
+    setBasketPosition(50);
+    setCoins([]);
+    setFinished(false);
+    setSubmitted(false);
+    setGameActive(true);
   };
+
+  const moveBasket = (direction) => {
+    setBasketPosition((position) =>
+      Math.max(8, Math.min(92, position + direction * 10))
+    );
+  };
+
+  useEffect(() => {
+    if (!gameActive) return;
+
+    const interval = setInterval(() => {
+      setCoins((previous) => {
+        const next = previous.map((coin) => ({
+          ...coin,
+          y: coin.y + 11
+        }));
+
+        const caught = next.filter(
+          (coin) =>
+            coin.y >= 78 &&
+            coin.y <= 96 &&
+            Math.abs(coin.x - basketPosition) < 13
+        ).length;
+
+        if (caught > 0) setScore((value) => value + caught);
+
+        const remaining = next.filter((coin) => coin.y < 100);
+        remaining.push({
+          id: Date.now() + Math.random(),
+          x: 8 + Math.random() * 84,
+          y: 0
+        });
+        return remaining;
+      });
+    }, 350);
+
+    return () => clearInterval(interval);
+  }, [gameActive, basketPosition]);
+
+  useEffect(() => {
+    if (!gameActive) return;
+    if (timeLeft <= 0) {
+      setGameActive(false);
+      setFinished(true);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setTimeLeft((value) => value - 1);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [gameActive, timeLeft]);
+
+  useEffect(() => {
+    if (finished && !submitted) {
+      setSubmitted(true);
+      playGame('catcher');
+    }
+  }, [finished, submitted]);
 
   const cardStyle = {
     background: '#1b263b',
@@ -378,13 +439,79 @@ const Games = () => {
         <div style={cardStyle}>
           <div style={{ fontSize: '42px' }}>🪙</div>
           <h2>Coin Catcher</h2>
-          <p>Tap the button 10 times to catch coins. Up to 3 plays daily.</p>
-          <div style={{ color: '#f5b942', fontSize: '20px', margin: '12px' }}>
-            {catchCount}/10
+          <p>Catch falling coins with your basket in 30 seconds!</p>
+
+          <div style={{
+            position: 'relative',
+            height: '230px',
+            overflow: 'hidden',
+            borderRadius: '12px',
+            border: '1px solid #52627d',
+            background: 'linear-gradient(180deg, #102b4e, #071426)',
+            marginTop: '14px'
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: '8px',
+              left: '0',
+              right: '0',
+              display: 'flex',
+              justifyContent: 'space-around',
+              color: '#f5b942',
+              fontWeight: 'bold',
+              zIndex: 2
+            }}>
+              <span>Score: {score}</span>
+              <span>Time: {timeLeft}s</span>
+            </div>
+
+            {coins.map((coin) => (
+              <div key={coin.id} style={{
+                position: 'absolute',
+                left: coin.x + '%',
+                top: coin.y + '%',
+                transform: 'translateX(-50%)',
+                fontSize: '25px'
+              }}>🪙</div>
+            ))}
+
+            <div style={{
+              position: 'absolute',
+              left: basketPosition + '%',
+              bottom: '8px',
+              transform: 'translateX(-50%)',
+              fontSize: '35px',
+              transition: 'left 0.12s ease'
+            }}>🧺</div>
+
+            {!gameActive && (
+              <div style={{
+                position: 'absolute',
+                inset: '0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'column',
+                background: 'rgba(5,12,25,0.72)',
+                gap: '8px'
+              }}>
+                <strong>{finished ? 'Time Up!' : 'Ready to Catch?'}</strong>
+                <span style={{ fontSize: '13px' }}>
+                  {finished ? 'Coins caught: ' + score : 'Move your basket to catch coins'}
+                </span>
+              </div>
+            )}
           </div>
-          <button style={buttonStyle} disabled={busy} onClick={catchCoin}>
-            {busy ? 'Please wait...' : '🪙 CATCH COIN'}
+
+          <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+            <button style={{ ...buttonStyle, marginTop: 0 }} disabled={!gameActive} onClick={() => moveBasket(-1)}>⬅ LEFT</button>
+            <button style={{ ...buttonStyle, marginTop: 0 }} disabled={!gameActive} onClick={() => moveBasket(1)}>RIGHT ➡</button>
+          </div>
+
+          <button style={buttonStyle} disabled={busy || gameActive} onClick={startCatcher}>
+            {gameActive ? 'GAME RUNNING...' : finished ? 'PLAY AGAIN' : 'START 30-SECOND GAME'}
           </button>
+          <small style={{ color: '#aab7cf' }}>Maximum 3 rewarded plays per day</small>
         </div>
 
         <div style={cardStyle}>

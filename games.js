@@ -8,6 +8,7 @@ exports.handler = async (event) => {
 
     const header = event.headers.authorization || event.headers.Authorization || '';
     const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+
     if (!token) {
       return { statusCode: 401, body: JSON.stringify({ message: 'Please login first.' }) };
     }
@@ -34,31 +35,41 @@ exports.handler = async (event) => {
     }).format(new Date());
 
     const rule = rules[game];
-    const points = rule.rewards[Math.floor(Math.random() * rule.rewards.length)];
+    const drawnPoints = rule.rewards[Math.floor(Math.random() * rule.rewards.length)];
+
     const userRef = db.collection('users').doc(decoded.uid);
     const claimRef = db.collection('gameClaims').doc(decoded.uid + '_' + today + '_' + game);
+    const dailyRef = db.collection('gameDailyTotals').doc(decoded.uid + '_' + today);
 
     const result = await db.runTransaction(async (tx) => {
       const claimSnap = await tx.get(claimRef);
+      const dailySnap = await tx.get(dailyRef);
       const userSnap = await tx.get(userRef);
 
       const previous = claimSnap.exists ? claimSnap.data() : {};
       const plays = Number(previous.plays) || 0;
+      const dailyPoints = dailySnap.exists ? (Number(dailySnap.data().points) || 0) : 0;
+      const gamePoints = dailySnap.exists
+        ? (Number(dailySnap.data().gamePoints ?? dailySnap.data().points) || 0) : 0;
 
       if (plays >= rule.max) {
-        return { limited: true, plays };
+        return { limited: true, message: 'Daily play limit reached for this game.' };
       }
 
+      if (gamePoints >= 10 || dailyPoints >= 12) {
+        return { limited: true, message: 'Daily game or total Demo Points limit reached.' };
+      }
+
+      const awarded = Math.min(drawnPoints, 10 - gamePoints, 12 - dailyPoints);
       const balance = userSnap.exists ? (Number(userSnap.data().coinBalance) || 0) : 0;
-      const newBalance = balance + points;
 
       if (userSnap.exists) {
-        tx.update(userRef, { coinBalance: newBalance });
+        tx.update(userRef, { coinBalance: balance + awarded });
       } else {
         tx.set(userRef, {
           name: decoded.name || '',
           email: decoded.email || '',
-          coinBalance: newBalance,
+          coinBalance: awarded,
           createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
       }
@@ -68,23 +79,26 @@ exports.handler = async (event) => {
         game,
         date: today,
         plays: plays + 1,
-        points: (Number(previous.points) || 0) + points,
+        points: (Number(previous.points) || 0) + awarded,
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       });
 
-      return { limited: false, points, plays: plays + 1, newBalance };
+      tx.set(dailyRef, {
+        userId: decoded.uid,
+        date: today,
+        points: dailyPoints + awarded,
+        gamePoints: gamePoints + awarded,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      return { limited: false, points: awarded, total: dailyPoints + awarded, gameTotal: gamePoints + awarded };
     });
 
     if (result.limited) {
       return {
         statusCode: 429,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          success: false,
-          message: 'Daily limit reached for this game. Come back tomorrow!',
-          plays: result.plays,
-          maxPlays: rule.max
-        })
+        body: JSON.stringify({ success: false, message: result.message })
       };
     }
 
@@ -95,8 +109,10 @@ exports.handler = async (event) => {
         success: true,
         game,
         points: result.points,
-        plays: result.plays,
-        maxPlays: rule.max
+        dailyPoints: result.total,
+        dailyGamePoints: result.gameTotal,
+        dailyGameLimit: 10,
+        dailyTotalLimit: 12
       })
     };
   } catch (error) {
