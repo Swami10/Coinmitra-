@@ -611,6 +611,60 @@ const StaticPage = ({ title, content }) => (
   </div>
 );
 
+const PrivacyPolicy = () => (
+  <div style={{ maxWidth: '900px', margin: '40px auto', padding: '20px', color: '#dbe4f0' }}>
+    <div style={{ background: '#1b263b', border: '1px solid #27374d', borderRadius: '16px', padding: '28px', lineHeight: '1.8' }}>
+      <h1 style={{ color: '#ffffff' }}>Privacy Policy</h1>
+      <p>Last Updated: November 21, 2026</p>
+
+      <p>At CoinMitra, we respect your privacy. This Privacy Policy explains how information may be collected, used, stored and protected when you visit or use our website.</p>
+
+      <h3>1. Information We May Collect</h3>
+      <p>Depending on the features you use, we may collect information that you voluntarily provide, such as your name, email address or account details. We may also collect basic technical information, including browser type, device information, IP address, pages visited and website usage data.</p>
+      <p>Please do not submit passwords, payment card details or other sensitive personal information through public forms or messages.</p>
+
+      <h3>2. How We Use Information</h3>
+      <p>Information may be used to operate and maintain CoinMitra, provide website features, manage accounts and demo coin balances, respond to support requests, improve user experience, prevent misuse and maintain website security.</p>
+
+      <h3>3. Cookies and Similar Technologies</h3>
+      <p>CoinMitra and certain third-party services may use cookies or similar technologies to remember preferences, understand website usage, support website functionality and display advertisements. You can manage or disable cookies through your browser settings. Some website features may not work properly if cookies are disabled.</p>
+
+      <h3>4. Google AdSense and Advertising</h3>
+      <p>Our website may display advertisements provided by Google AdSense and other advertising partners. Google and its partners may use cookies, device identifiers or similar technologies to serve and measure advertisements.</p>
+      <p>Depending on your location, consent choices and applicable requirements, advertisements may be personalized or non-personalized. Google's use of advertising cookies is subject to Google's own privacy policies.</p>
+      <p>You can learn more about how Google uses information at:
+        {' '}<a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa' }}>Google Advertising Policies</a>.
+      </p>
+      <p>You can manage Google's ad personalization settings at:
+        {' '}<a href="https://myadcenter.google.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa' }}>Google My Ad Center</a>.
+      </p>
+
+      <h3>5. Third-Party Services</h3>
+      <p>We may use third-party services to support website hosting, security, analytics, authentication and advertising. These providers may process information according to their own privacy policies and applicable terms. We do not control the privacy practices of independent third-party websites.</p>
+
+      <h3>6. Data Sharing</h3>
+      <p>We do not sell personal information to third parties. Information may be shared with service providers when necessary to operate the website, when required by law, or to protect the rights, security and integrity of CoinMitra and its users.</p>
+
+      <h3>7. Data Security and Retention</h3>
+      <p>We take reasonable measures to protect information against unauthorized access, loss or misuse. However, no method of online transmission or electronic storage is completely secure. Information is retained only for as long as reasonably necessary for the purposes described in this policy or as required by law.</p>
+
+      <h3>8. Your Choices and Rights</h3>
+      <p>Subject to applicable law, you may request access to, correction of or deletion of personal information that you have provided to us. You may also manage browser cookies and advertising preferences through the relevant settings. Contact us through our Contact Us page for privacy-related requests.</p>
+
+      <h3>9. Children's Privacy</h3>
+      <p>CoinMitra is intended for adult users and is not designed for children under 18. We do not knowingly seek to collect personal information from children. If you believe a child has provided personal information, please contact us so that we can review the matter.</p>
+
+      <h3>10. Changes to This Policy</h3>
+      <p>We may update this Privacy Policy from time to time. Any changes will be published on this page with an updated revision date. Continued use of the website after changes are published indicates that you have read the updated policy.</p>
+
+      <h3>11. Contact Us</h3>
+      <p>If you have questions, concerns or requests regarding this Privacy Policy or your personal information, please contact us through the Contact Us page on CoinMitra.</p>
+
+      <p style={{ marginTop: '28px', color: '#9ca3af' }}>Thank you for using CoinMitra.</p>
+    </div>
+  </div>
+);
+
 // --- MAIN APP ---
 
 function App() {
