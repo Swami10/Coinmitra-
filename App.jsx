@@ -1,6 +1,6 @@
 import Register from "./Register.jsx";
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { auth, db } from "./firebase.js";
 import { doc, onSnapshot, runTransaction, serverTimestamp } from "firebase/firestore";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "firebase/auth";
@@ -57,6 +57,8 @@ const Footer = () => (
           <li><Link to="/contact" style={{ color: '#a0aec0' }}>Contact Support</Link></li>
           <li><Link to="/privacy" style={{ color: '#a0aec0' }}>Privacy Policy</Link></li>
           <li><Link to="/terms" style={{ color: '#a0aec0' }}>Terms & Conditions</Link></li>
+          <li><Link to="/how-it-works" style={{ color: '#a0aec0' }}>How It Works</Link></li>
+          <li><Link to="/faq" style={{ color: '#a0aec0' }}>FAQ</Link></li>
         </ul>
       </div>
     </div>
@@ -64,6 +66,46 @@ const Footer = () => (
       © 2026 CoinMitra India. All rights reserved. Designed for Android & Web.
     </div>
   </footer>
+);
+
+
+const HowItWorks = () => (
+  <div style={{maxWidth:'900px',margin:'40px auto',padding:'25px',color:'#e0e1dd'}}>
+    <h1 style={{color:'#f5b942',marginBottom:'12px'}}>How CoinMitra Works</h1>
+    <p style={{lineHeight:'1.8',marginBottom:'25px'}}>CoinMitra is a demo rewards platform. Explore activities, learn and collect demo coins.</p>
+    {[
+      ['1. Create an Account','Register or log in to explore CoinMitra.'],
+      ['2. Play Daily Quiz','Answer quiz questions and learn something new.'],
+      ['3. Explore Activities','Discover available tasks and educational content.'],
+      ['4. Check Your Wallet','View your demo coin balance and activity history.']
+    ].map(([title,desc]) => (
+      <div key={title} style={{background:'#1b263b',padding:'20px',borderRadius:'12px',marginBottom:'15px'}}>
+        <h3 style={{color:'#f5b942',marginBottom:'8px'}}>{title}</h3>
+        <p style={{lineHeight:'1.6'}}>{desc}</p>
+      </div>
+    ))}
+    <p style={{fontSize:'13px',color:'#f5b942',marginTop:'20px'}}>Important: Demo Coins are illustrative only. They are not real money and have no guaranteed cash value.</p>
+  </div>
+);
+
+const FAQ = () => (
+  <div style={{maxWidth:'900px',margin:'40px auto',padding:'25px',color:'#e0e1dd'}}>
+    <h1 style={{color:'#f5b942',marginBottom:'12px'}}>Frequently Asked Questions</h1>
+    <p style={{lineHeight:'1.7',marginBottom:'25px'}}>Find answers to common questions about CoinMitra.</p>
+    {[
+      ['What is CoinMitra?','CoinMitra is a demo rewards platform where users can explore quizzes, activities and educational content.'],
+      ['Are Demo Coins real money?','No. Demo Coins are illustrative points only. They cannot currently be exchanged for cash, goods or services.'],
+      ['How can I earn Demo Coins?','You can explore available quizzes, daily check-in and other activities displayed on the website.'],
+      ['Do I need to pay to join?','You can register and explore the available demo features without making a payment. Never pay anyone promising guaranteed rewards.'],
+      ['Can I withdraw my Demo Coins?','No. Demo Coins do not currently have cash withdrawal or redemption value.'],
+      ['How can I contact support?','Email us at supportcoinmitra@gmail.com for website-related questions. Never share your password or OTP.']
+    ].map(([q,a]) => (
+      <details key={q} style={{background:'#1b263b',padding:'18px',borderRadius:'10px',marginBottom:'12px'}}>
+        <summary style={{cursor:'pointer',color:'#f5b942',fontWeight:'bold'}}>{q}</summary>
+        <p style={{lineHeight:'1.7',marginTop:'12px'}}>{a}</p>
+      </details>
+    ))}
+  </div>
 );
 
 // --- PAGES ---
@@ -748,6 +790,16 @@ const ContactUs = () => (
   </div>
 );
 
+
+const NotFound = () => (
+  <div style={{minHeight:'55vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',textAlign:'center',padding:'30px',color:'#e0e1dd'}}>
+    <h1 style={{fontSize:'76px',color:'#f5b942'}}>404</h1>
+    <h2 style={{marginBottom:'12px'}}>Page Not Found</h2>
+    <p style={{marginBottom:'25px'}}>Sorry, the page you are looking for does not exist.</p>
+    <Link to="/" style={{background:'#f5b942',color:'#0b132b',padding:'12px 24px',borderRadius:'8px',fontWeight:'bold'}}>Go to Home</Link>
+  </div>
+);
+
 // --- MAIN APP ---
 
 function App() {
@@ -764,6 +816,51 @@ function App() {
   }, []);
   const [coinBalance, setCoinBalance] = useState(0);
   const [adPoints, setAdPoints] = useState(0);
+  const location = useLocation();
+
+  useEffect(() => {
+    const pageSEO = {
+      '/': ['CoinMitra - Earn, Learn, Play & Explore', 'Explore quizzes, educational activities and demo rewards on CoinMitra.'],
+      '/dashboard': ['Dashboard - CoinMitra', 'View your CoinMitra demo account dashboard and activity.'],
+      '/quiz': ['Daily Quiz - CoinMitra', 'Play educational quizzes and test your knowledge on CoinMitra.'],
+      '/tasks': ['Activities - CoinMitra', 'Explore available activities on CoinMitra.'],
+      '/wallet': ['Demo Coin Wallet - CoinMitra', 'View your demo coin balance and wallet information.'],
+      '/rewards': ['Demo Rewards - CoinMitra', 'Explore illustrative demo rewards on CoinMitra.'],
+      '/watch-earn': ['Educational Videos - CoinMitra', 'Explore educational video content on CoinMitra.'],
+      '/about': ['About Us - CoinMitra', 'Learn about CoinMitra and our demo learning platform.'],
+      '/contact': ['Contact Us - CoinMitra', 'Contact CoinMitra support for questions and assistance.'],
+      '/privacy': ['Privacy Policy - CoinMitra', 'Read the CoinMitra privacy policy.'],
+      '/terms': ['Terms & Conditions - CoinMitra', 'Read the CoinMitra terms and conditions.'],
+      '/faq': ['FAQ - CoinMitra', 'Find answers to frequently asked questions about CoinMitra.'],
+      '/how-it-works': ['How It Works - CoinMitra', 'Learn how to explore and use CoinMitra.'],
+      '/login': ['Login - CoinMitra', 'Log in to your CoinMitra account.'],
+      '/register': ['Register - CoinMitra', 'Create your CoinMitra account.'],
+      '/admin': ['Admin - CoinMitra', 'CoinMitra administration page.']
+    };
+
+    const [title, description] = pageSEO[location.pathname] || pageSEO['/'];
+    document.title = title;
+
+    let meta = document.querySelector('meta[name="description"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'description';
+      document.head.appendChild(meta);
+    }
+    meta.content = description;
+
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) canonical.href = 'https://sparkly-douhua-95dab4.netlify.app' + location.pathname;
+
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.content = title;
+
+    const ogDescription = document.querySelector('meta[property="og:description"]');
+    if (ogDescription) ogDescription.content = description;
+
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) ogUrl.content = 'https://sparkly-douhua-95dab4.netlify.app' + location.pathname;
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!user.uid) {
@@ -801,8 +898,11 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/about" element={<AboutUs />} />
             <Route path="/contact" element={<ContactUs />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/faq" element={<FAQ />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsConditions />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
         <Footer />
