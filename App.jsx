@@ -59,6 +59,7 @@ const Footer = () => (
           <li><Link to="/terms" style={{ color: '#a0aec0' }}>Terms & Conditions</Link></li>
           <li><Link to="/how-it-works" style={{ color: '#a0aec0' }}>How It Works</Link></li>
           <li><Link to="/faq" style={{ color: '#a0aec0' }}>FAQ</Link></li>
+            <li><Link to="/advertise" style={{ color: '#a0aec0' }}>Advertise & Partner With Us</Link></li>
         </ul>
       </div>
     </div>
@@ -1098,6 +1099,35 @@ const Login = () => {
   );
 };
 
+const AdvertiseWithUs = () => (
+  <div style={{ maxWidth: '950px', margin: '40px auto', padding: '20px', color: '#dbe4f0' }}>
+    <div style={{ background: '#1b263b', border: '1px solid #33415c', borderRadius: '18px', padding: '30px', lineHeight: '1.8' }}>
+      <h1 style={{ color: '#f5b942' }}>Advertise & Partner With CoinMitra</h1>
+      <p>Connect your brand with CoinMitra through advertising and partnership opportunities. Contact us to discuss a suitable campaign.</p>
+      <h2 style={{ color: '#ffffff' }}>1. Advertise With Us</h2>
+      <p>Explore opportunities for banner placements, sponsored listings and promotional campaigns on CoinMitra. Placement, availability and terms are subject to review and agreement.</p>
+      <h2 style={{ color: '#ffffff' }}>2. Become Our Sponsor</h2>
+      <p>We welcome sponsorship enquiries from shopping and e-commerce, education, technology, digital services, electronics, food and lifestyle brands.</p>
+      <h2 style={{ color: '#ffffff' }}>3. Partner With CoinMitra</h2>
+      <p>Interested in affiliate partnerships, product awareness or a suitable promotional collaboration? Tell us about your company, product and proposed partnership.</p>
+      <h2 style={{ color: '#ffffff' }}>Our Partnership Principles</h2>
+      <ul>
+        <li>Promotions are reviewed before publication.</li>
+        <li>We do not guarantee traffic, views, sales or conversions.</li>
+        <li>All campaigns are subject to applicable laws and platform policies.</li>
+        <li>Reward or task-based promotions, where offered, are intended for adults aged 18 and above.</li>
+        <li>We do not promise guaranteed earnings or rewards through sponsored promotions.</li>
+      </ul>
+      <div style={{ background: '#0d1b2a', borderRadius: '12px', padding: '20px', marginTop: '24px' }}>
+        <h2 style={{ color: '#f5b942' }}>Contact Our Team</h2>
+        <p>Share your brand name, website and partnership proposal with us.</p>
+        <a href="mailto:supportcoinmitra@gmail.com?subject=CoinMitra%20Advertising%20and%20Partnership%20Enquiry" style={{ display: 'inline-block', background: '#f39c12', color: '#0d1b2a', padding: '12px 20px', borderRadius: '8px', fontWeight: 'bold', textDecoration: 'none' }}>Email CoinMitra</a>
+        <p style={{ marginBottom: 0 }}>supportcoinmitra@gmail.com</p>
+      </div>
+    </div>
+  </div>
+);
+
 const StaticPage = ({ title, content }) => (
   <div style={{ maxWidth: '800px', margin: '40px auto', padding: '20px' }}>
     <div style={{ background: '#1b263b', border: '1px solid #27374d', borderRadius: '20px', padding: '40px' }}>
@@ -1301,6 +1331,7 @@ function App() {
       '/terms': ['Terms & Conditions - CoinMitra', 'Read the CoinMitra terms and conditions.'],
       '/faq': ['FAQ - CoinMitra', 'Find answers to frequently asked questions about CoinMitra.'],
       '/how-it-works': ['How It Works - CoinMitra', 'Learn how to explore and use CoinMitra.'],
+            '/advertise': ['Advertise & Partner With Us - CoinMitra', 'Explore advertising, sponsorship and business partnership opportunities with CoinMitra.'],
       '/login': ['Login - CoinMitra', 'Log in to your CoinMitra account.'],
       '/register': ['Register - CoinMitra', 'Create your CoinMitra account.'],
       '/admin': ['Admin - CoinMitra', 'CoinMitra administration page.']
@@ -1369,6 +1400,7 @@ function App() {
             <Route path="/contact" element={<ContactUs />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/faq" element={<FAQ />} />
+            <Route path="/advertise" element={<AdvertiseWithUs />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsConditions />} />
             <Route path="*" element={<NotFound />} />
