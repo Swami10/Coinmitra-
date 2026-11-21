@@ -16,40 +16,30 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
 const Navbar = ({ user, coinBalance }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
+  const navLinks = (<>
+    <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
+    <Link to="/quiz" onClick={() => setMobileMenuOpen(false)}>Quiz</Link>
+    <Link to="/wallet" onClick={() => setMobileMenuOpen(false)}>Wallet</Link>
+    <Link to="/admin" className="admin-link" onClick={() => setMobileMenuOpen(false)}>Admin</Link>
+    {user.email ? <button className="logout-link" onClick={() => { setMobileMenuOpen(false); signOut(auth); }}>Logout</button> : <Link to="/login" className="login-link" onClick={() => setMobileMenuOpen(false)}>Login</Link>}
+  </>);
   return (
-    <nav style={{ background: '#0d1b2a', borderBottom: '1px solid #1b263b', position: 'sticky', top: 0, zIndex: 1000 }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px' }}>
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-          <div style={{ background: 'linear-gradient(135deg, #f39c12, #e67e22)', padding: '8px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Coins size={24} color="#0d1b2a" />
-          </div>
-          <div>
-            <span style={{ fontSize: '22px', fontWeight: '800', color: '#ffffff', letterSpacing: '0.5px' }}>Coin<span style={{ color: '#f39c12' }}>Mitra</span></span>
-            <div style={{ fontSize: '10px', color: '#a0aec0', letterSpacing: '1px' }}>EARN • LEARN • PLAY</div>
-          </div>
+    <nav className="main-navbar">
+      <div className="navbar-inner">
+        <Link to="/" className="navbar-brand">
+          <div className="brand-icon"><Coins size={24} color="#0d1b2a" /></div>
+          <div><span className="brand-name">Coin<span>Mitra</span></span><div className="brand-tagline">EARN • LEARN • PLAY</div></div>
         </Link>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{ background: '#1b263b', border: '1px solid #f39c12', padding: '6px 14px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Sparkles size={16} color="#f39c12" />
-            <span style={{ fontWeight: '700', color: '#f39c12' }}>{coinBalance.toLocaleString()} Coins</span>
-            <span style={{ fontSize: '11px', background: '#322612', color: '#f39c12', padding: '2px 6px', borderRadius: '4px' }}>DEMO</span>
-          </div>
-
-          <div className="desktop-nav" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-            <Link to="/dashboard" style={{ color: '#e0e1dd', fontWeight: '500' }}>Dashboard</Link>
-            <Link to="/quiz" style={{ color: '#e0e1dd', fontWeight: '500' }}>Quiz</Link>
-            <Link to="/wallet" style={{ color: '#e0e1dd', fontWeight: '500' }}>Wallet</Link>
-            <Link to="/admin" style={{ color: '#f39c12', fontWeight: '700', background: '#222831', padding: '6px 12px', borderRadius: '6px' }}>Admin</Link>
-            {user.email ? <button onClick={() => signOut(auth)} style={{ background: '#e74c3c', color: '#fff', padding: '8px 16px', borderRadius: '8px', fontWeight: '700' }}>Logout</button> : <Link to="/login" style={{ background: '#f39c12', color: '#0d1b2a', padding: '8px 16px', borderRadius: '8px', fontWeight: '700' }}>Login</Link>}
-          </div>
+        <div className="navbar-actions">
+          <div className="coin-balance"><Sparkles size={16} color="#f39c12" /><span>{coinBalance.toLocaleString()} Coins</span><span className="demo-tag">DEMO</span></div>
+          <div className="desktop-nav">{navLinks}</div>
+          <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">{mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}</button>
         </div>
       </div>
+      {mobileMenuOpen && <div className="mobile-nav">{navLinks}</div>}
     </nav>
   );
 };
-
 const Footer = () => (
   <footer style={{ background: '#070f1a', borderTop: '1px solid #1b263b', padding: '40px 20px 20px', marginTop: '60px', color: '#a0aec0' }}>
     <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '30px', marginBottom: '30px' }}>
@@ -59,15 +49,6 @@ const Footer = () => (
         <div style={{ marginTop: '15px', fontSize: '12px', color: '#f39c12', background: '#1b263b', padding: '8px', borderRadius: '6px', display: 'inline-block' }}>
           ⚠️ 1000 Demo Coins = ₹10 Illustrative Value (DEMO MODE)
         </div>
-      </div>
-      <div>
-        <h4 style={{ color: '#ffffff', marginBottom: '15px' }}>Quick Links</h4>
-        <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '14px' }}>
-          <li><Link to="/dashboard" style={{ color: '#a0aec0' }}>Member Dashboard</Link></li>
-          <li><Link to="/quiz" style={{ color: '#a0aec0' }}>Quiz & Brain Games</Link></li>
-          <li><Link to="/tasks" style={{ color: '#a0aec0' }}>Sponsored Tasks</Link></li>
-          <li><Link to="/wallet" style={{ color: '#a0aec0' }}>My Coin Wallet</Link></li>
-        </ul>
       </div>
       <div>
         <h4 style={{ color: '#ffffff', marginBottom: '15px' }}>Legal & Company</h4>
@@ -87,44 +68,49 @@ const Footer = () => (
 
 // --- PAGES ---
 
+
 const Home = ({ addCoins }) => {
   const navigate = useNavigate();
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
-      <div style={{ background: 'linear-gradient(135deg, #1b263b, #0d1b2a)', border: '1px solid #27374d', borderRadius: '24px', padding: '60px 40px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', background: 'radial-gradient(circle, rgba(243,156,18,0.2) 0%, transparent 70%)', borderRadius: '50%' }}></div>
-        <span style={{ background: '#f39c12', color: '#0d1b2a', padding: '6px 16px', borderRadius: '20px', fontWeight: '700', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-          India's #1 Rewards Platform
-        </span>
-        <h1 style={{ fontSize: '42px', fontWeight: '800', color: '#ffffff', margin: '20px 0' }}>
-          Earn • Learn • Play • <span style={{ color: '#f39c12' }}>Reward</span>
-        </h1>
-        <p style={{ fontSize: '18px', color: '#a0aec0', maxWidth: '700px', margin: '0 auto 30px', lineHeight: '1.6' }}>
-          Participate in daily quizzes, complete sponsored tasks, watch educational videos, and convert your demo coins into exciting rewards.
-        </p>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', flexWrap: 'wrap' }}>
-          <button onClick={() => navigate('/dashboard')} style={{ background: '#f39c12', color: '#0d1b2a', padding: '14px 28px', borderRadius: '12px', fontWeight: '700', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            Get Started Free <ArrowRight size={18} />
-          </button>
-          <button onClick={() => navigate('/quiz')} style={{ background: '#27374d', color: '#ffffff', padding: '14px 28px', borderRadius: '12px', fontWeight: '700', fontSize: '16px', border: '1px solid #415a77' }}>
-            Play Daily Quiz
-          </button>
+    <div className="coin-home">
+      <section className="coin-hero">
+        <div className="hero-copy">
+          <span className="hero-badge">🏆 India's Rewards Platform</span>
+          <h1>Earn • Learn • Play • <span>Reward</span></h1>
+          <p>Participate in daily quizzes, complete sponsored tasks, watch educational videos and explore exciting demo rewards.</p>
+          <div className="hero-buttons">
+            <button onClick={() => navigate('/dashboard')}>Get Started Free <ArrowRight size={19}/></button>
+            <button className="quiz-button" onClick={() => navigate('/quiz')}>Play Daily Quiz</button>
+          </div>
+          <div className="hero-trust">🔒 Safe • Secure • Transparent Demo Platform</div>
         </div>
-      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '25px', marginTop: '50px' }}>
+        <div className="hero-art">
+          <div className="art-glow"></div>
+          <div className="float-coin coin-one">C</div>
+          <div className="float-coin coin-two">C</div>
+          <div className="float-coin coin-three">₹</div>
+          <div className="reward-gift"><div className="gift-ribbon"></div><div className="gift-bow">✦</div></div>
+          <div className="art-wallet"><div className="wallet-symbol">C</div><strong>CoinMitra</strong><small>REWARD WALLET</small><div className="wallet-line"></div><span>Earn • Learn • Play</span></div>
+          <div className="art-sparkle sparkle-one">✦</div>
+          <div className="art-sparkle sparkle-two">✧</div>
+          <div className="art-sparkle sparkle-three">✦</div>
+        </div>
+      </section>
+
+      <div className="coin-demo-note">⚠️ 1000 Demo Coins = ₹10 Illustrative Value — DEMO MODE ONLY</div>
+
+      <div className="coin-feature-grid">
         {[
           { icon: <CheckSquare size={32} color="#f39c12" />, title: "Daily Check-in", desc: "Claim streak bonuses every 24 hours without duplication." },
           { icon: <Gamepad2 size={32} color="#f39c12" />, title: "Quizzes & Games", desc: "Test your knowledge on general awareness and digital safety." },
-          { icon: <BookOpen size={32} color="#f39c12" />, title: "Educational Videos", desc: "Learn financial literacy and earn rewards for completion." },
-          { icon: <WalletIcon size={32} color="#f39c12" />, title: "Demo Coin Wallet", desc: "Track earnings with complete ledger transparency and security." }
+          { icon: <BookOpen size={32} color="#f39c12" />, title: "Educational Videos", desc: "Learn financial literacy and explore educational content." },
+          { icon: <WalletIcon size={32} color="#f39c12" />, title: "Demo Coin Wallet", desc: "Track your demo coin balance and activity." }
         ].map((item, idx) => (
-          <div key={idx} style={{ background: '#1b263b', border: '1px solid #27374d', borderRadius: '16px', padding: '30px', transition: 'transform 0.2s' }}>
-            <div style={{ background: '#0d1b2a', width: '60px', height: '60px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-              {item.icon}
-            </div>
-            <h3 style={{ color: '#ffffff', fontSize: '18px', marginBottom: '10px' }}>{item.title}</h3>
-            <p style={{ color: '#a0aec0', fontSize: '14px', lineHeight: '1.5' }}>{item.desc}</p>
+          <div key={idx} className="coin-feature-card">
+            <div className="feature-icon">{item.icon}</div>
+            <h3>{item.title}</h3>
+            <p>{item.desc}</p>
           </div>
         ))}
       </div>
